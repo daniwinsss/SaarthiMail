@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-secondary: #10B981;
+  --color-tertiary: #8B5CF6;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #64748B;
+  --color-border: #E2E8F0;
+  --color-accent-light: #EFF6FF;
+
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+  --radius-24: 24px;
+  --radius-32: 32px;
+
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-44: 44px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-72: 72px;
+  --spacing-80: 80px;
+  --spacing-120: 120px;
+  --spacing-240: 240px;
+  --spacing-260: 260px;
+  --spacing-320: 320px;
+  --spacing-340: 340px;
+  --spacing-360: 360px;
+  --spacing-440: 440px;
+  --spacing-480: 480px;
+  --spacing-640: 640px;
+  --spacing-720: 720px;
+  --spacing-960: 960px;
+
+  --shadow-premium: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+  
+  .panel {
+    @apply bg-white border border-border rounded-16 shadow-sm;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-12 px-12 py-8 rounded-8 text-[14px] font-medium transition-all duration-150;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white px-16 py-10 rounded-12 font-semibold hover:brightness-110 active:scale-95 transition-all shadow-md shadow-primary/20;
+  }
+
+  .btn-ghost {
+    @apply p-8 hover:bg-slate-100 rounded-8 text-text-secondary transition-colors;
+  }
+
+  .card {
+    @apply bg-white border border-border rounded-16 p-20 shadow-premium;
+  }
+}
