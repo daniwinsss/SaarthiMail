@@ -1,6 +1,9 @@
 const express = require("express");
 const passport = require("passport");
 const router = express.Router();
+
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
 router.get(
     "/google",
     passport.authenticate("google",{
@@ -17,11 +20,10 @@ router.get(
 router.get(
     "/google/callback",
     passport.authenticate("google",{
-        failureRedirect:"http://localhost:5173/auth",
+        failureRedirect: `${clientUrl}/auth`,
     }),
     (req, res) => {
-        // Redirect back to frontend
-        res.redirect("http://localhost:5173/");
+        res.redirect(`${clientUrl}/`);
     }
 );
 
@@ -38,6 +40,7 @@ router.get("/logout", (req, res) => {
         if (err) {
             return res.status(500).json({ success: false, message: "Error logging out" });
         }
+        res.clearCookie("connect.sid");
         res.json({ success: true, message: "Logged out successfully" });
     });
 });
