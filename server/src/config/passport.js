@@ -1,6 +1,10 @@
 const passport = require("passport");
 const googleStrategy = require("passport-google-oauth20").Strategy;
 
+if (process.env.NODE_ENV === "production" && !process.env.GOOGLE_CALLBACK_URL) {
+    throw new Error("GOOGLE_CALLBACK_URL env var is required in production");
+}
+
 const callbackURL =
     process.env.GOOGLE_CALLBACK_URL ||
     `http://localhost:${process.env.PORT || 5000}/api/auth/google/callback`;
