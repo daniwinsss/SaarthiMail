@@ -4,6 +4,10 @@ const session = require("express-session");
 const passport = require("passport");
 const { MongoStore } = require("connect-mongo");
 
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+});
+
 require("./src/config/passport.js");
 
 const app = express();
