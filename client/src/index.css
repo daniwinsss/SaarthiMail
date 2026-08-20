@@ -11,6 +11,15 @@
   --color-border: #E2E8F0;
   --color-accent-light: #EFF6FF;
 
+  /* priority accents (wireframe: Urgent / Important / Later) */
+  --color-urgent: #DC2626;
+  --color-important: #EAB308;
+  --color-later: #93C5FD;
+
+  /* AI surfaces (wireframe: wf-ai-panel) */
+  --color-ai-surface: #F0F7FF;
+  --color-ai-border: #BFDBFE;
+
   --radius-4: 4px;
   --radius-6: 6px;
   --radius-8: 8px;
@@ -28,21 +37,26 @@
   --spacing-16: 16px;
   --spacing-20: 20px;
   --spacing-24: 24px;
+  --spacing-28: 28px;
   --spacing-32: 32px;
   --spacing-40: 40px;
   --spacing-44: 44px;
   --spacing-48: 48px;
+  --spacing-56: 56px;
   --spacing-64: 64px;
   --spacing-72: 72px;
   --spacing-80: 80px;
   --spacing-120: 120px;
+  --spacing-220: 220px;
   --spacing-240: 240px;
   --spacing-260: 260px;
+  --spacing-280: 280px;
   --spacing-320: 320px;
   --spacing-340: 340px;
   --spacing-360: 360px;
   --spacing-440: 440px;
   --spacing-480: 480px;
+  --spacing-560: 560px;
   --spacing-640: 640px;
   --spacing-720: 720px;
   --spacing-960: 960px;
@@ -80,5 +94,61 @@
 
   .card {
     @apply bg-white border border-border rounded-16 p-20 shadow-premium;
+  }
+
+  /* --- wireframe primitives --------------------------------------------- */
+
+  .tag {
+    @apply inline-flex items-center gap-4 px-8 py-2 rounded-full text-[10px] font-black uppercase tracking-tighter;
+  }
+  .tag-urgent {
+    @apply bg-red-50 text-urgent border border-red-100;
+  }
+  .tag-important {
+    @apply bg-amber-50 text-amber-600 border border-amber-100;
+  }
+  .tag-later {
+    @apply bg-slate-50 text-slate-500 border border-slate-200;
+  }
+  .tag-neutral {
+    @apply bg-accent-light text-primary border border-primary/20;
+  }
+
+  .ai-badge {
+    @apply inline-flex items-center gap-6 px-10 py-4 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-tighter;
+  }
+
+  .ai-surface {
+    @apply bg-ai-surface border border-ai-border;
+  }
+
+  .demo-note {
+    @apply text-[10px] font-black uppercase tracking-tighter text-slate-400;
+  }
+
+  .tab {
+    @apply px-14 py-10 text-[13px] font-bold text-slate-400 border-b-2 border-transparent -mb-2 whitespace-nowrap transition-colors hover:text-slate-600;
+  }
+  .tab-active {
+    @apply text-primary border-primary;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #CBD5E1;
   }
 }

@@ -11,6 +11,8 @@ const AIInsightPanel = ({
   onUseReply,
   onRegenerateReply,
   replyLoading = false,
+  relatedThreads,
+  sentiment,
 }) => {
   const hasReply =
     Boolean(insights.reply) &&
@@ -23,7 +25,7 @@ const AIInsightPanel = ({
           <div className="flex items-center gap-8 text-primary">
             <Sparkles size={20} fill="currentColor" />
             <h2 className="text-[15px] font-bold tracking-tight text-slate-900">
-              {mode === 'inbox' ? 'AI Insight' : 'AI Assistant'}
+              {mode === 'inbox' ? 'AI Insight' : 'AI Insights'}
             </h2>
           </div>
           {onClose && (
@@ -32,7 +34,7 @@ const AIInsightPanel = ({
             </button>
           )}
         </div>
-        
+
         <div className="bg-slate-50 border border-slate-100 p-16 rounded-16 relative overflow-hidden shadow-sm">
            <div className="flex items-center justify-between mb-10">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -102,6 +104,42 @@ const AIInsightPanel = ({
          </div>
          {mode === 'inbox' && <p className="text-[10px] text-slate-400 text-center mt-12">All insights are private and processed securely.</p>}
       </div>
+
+      {/* Wireframe 3a: Related Threads + Sentiment. Rendered only when the caller
+          supplies them, so the inbox/priority/settings panels are unaffected. */}
+      {Array.isArray(relatedThreads) && relatedThreads.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-12 px-4">
+            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Related Threads</h3>
+            <span className="demo-note">Demo data</span>
+          </div>
+          <div className="bg-white border border-slate-200 p-12 rounded-12 flex flex-col gap-8">
+            {relatedThreads.map((thread) => (
+              <span key={thread.id} className="text-[12px] font-bold text-primary underline decoration-primary/30">
+                {thread.title} ({thread.date})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sentiment && (
+        <div>
+          <div className="flex items-center justify-between mb-12 px-4">
+            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Sentiment</h3>
+            <span className="demo-note">Demo data</span>
+          </div>
+          <div className="bg-white border border-slate-200 p-12 rounded-12 flex items-center gap-10">
+            <div className="h-6 w-64 bg-slate-100 rounded-full overflow-hidden shrink-0">
+              <div
+                className="h-full bg-secondary rounded-full"
+                style={{ width: `${Math.round((sentiment.score ?? 0.5) * 100)}%` }}
+              />
+            </div>
+            <span className="text-[11px] font-bold text-emerald-600">{sentiment.label}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -119,19 +157,19 @@ const AIInsightPanel = ({
       <AnimatePresence>
         {isOpen && (
           <div className="lg:hidden fixed inset-0 z-[60] flex justify-end">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-[320px] max-w-[85%] bg-white h-full shadow-2xl p-24 overflow-y-auto"
+              className="relative w-[320px] max-w-[85%] bg-white h-full shadow-2xl p-24 overflow-y-auto custom-scrollbar"
             >
               {content}
             </motion.div>

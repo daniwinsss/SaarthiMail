@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import Inbox from './pages/Inbox';
 import Auth from './pages/Auth';
 import MailDetail from './pages/MailDetail';
 import Priority from './pages/Priority';
 import Settings from './pages/Settings';
+import Calendar from './pages/Calendar';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import ComposeModal from './components/ComposeModal';
@@ -26,14 +27,20 @@ const MobileNavItem = ({ to, icon: Icon, label }) => (
   </NavLink>
 );
 
-const MainLayout = ({ children, onCompose, showToast }) => {
+const MainLayout = ({ children, onCompose, showToast, query, onQueryChange, searchPlaceholder }) => {
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden flex-col md:flex-row">
       <div className="hidden md:block">
         <Sidebar onCompose={onCompose} />
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar showToast={showToast} />
+        <Topbar
+          showToast={showToast}
+          onCompose={onCompose}
+          query={query}
+          onQueryChange={onQueryChange}
+          searchPlaceholder={searchPlaceholder}
+        />
         <main className="flex-1 overflow-hidden">
           {children}
         </main>
@@ -84,14 +91,26 @@ const ProtectedRoute = ({ children, setUser }) => {
 
 function App() {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [composeContext, setComposeContext] = useState(null);
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
+  const [query, setQuery] = useState('');
 
   const showToast = (message, type = 'info') => {
     setToast({ id: Date.now(), message, type });
   };
 
   const dismissToast = () => setToast(null);
+
+  const openCompose = (context = null) => {
+    setComposeContext(context);
+    setIsComposeOpen(true);
+  };
+
+  const closeCompose = () => {
+    setIsComposeOpen(false);
+    setComposeContext(null);
+  };
 
   return (
     <Router>
@@ -101,8 +120,14 @@ function App() {
           path="/inbox" 
           element={
             <ProtectedRoute setUser={setUser}>
-              <MainLayout onCompose={() => setIsComposeOpen(true)} showToast={showToast}>
-                <Inbox showToast={showToast} />
+              <MainLayout
+                onCompose={openCompose}
+                showToast={showToast}
+                query={query}
+                onQueryChange={setQuery}
+                searchPlaceholder="Search mail..."
+              >
+                <Inbox showToast={showToast} query={query} onCompose={openCompose} />
               </MainLayout>
             </ProtectedRoute>
           } 
@@ -111,8 +136,8 @@ function App() {
           path="/mail/:id" 
           element={
             <ProtectedRoute setUser={setUser}>
-              <MainLayout onCompose={() => setIsComposeOpen(true)} showToast={showToast}>
-                <MailDetail showToast={showToast} user={user} />
+              <MainLayout onCompose={openCompose} showToast={showToast}>
+                <MailDetail showToast={showToast} user={user} onCompose={openCompose} />
               </MainLayout>
             </ProtectedRoute>
           } 
@@ -121,8 +146,30 @@ function App() {
           path="/priority" 
           element={
             <ProtectedRoute setUser={setUser}>
-              <MainLayout onCompose={() => setIsComposeOpen(true)} showToast={showToast}>
-                <Priority showToast={showToast} />
+              <MainLayout
+                onCompose={openCompose}
+                showToast={showToast}
+                query={query}
+                onQueryChange={setQuery}
+                searchPlaceholder="Search..."
+              >
+                <Priority showToast={showToast} query={query} />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/calendar" 
+          element={
+            <ProtectedRoute setUser={setUser}>
+              <MainLayout
+                onCompose={openCompose}
+                showToast={showToast}
+                query={query}
+                onQueryChange={setQuery}
+                searchPlaceholder="Search events..."
+              >
+                <Calendar showToast={showToast} query={query} />
               </MainLayout>
             </ProtectedRoute>
           } 
@@ -131,15 +178,20 @@ function App() {
           path="/settings" 
           element={
             <ProtectedRoute setUser={setUser}>
-              <MainLayout onCompose={() => setIsComposeOpen(true)} showToast={showToast}>
-                <Settings />
+              <MainLayout onCompose={openCompose} showToast={showToast}>
+                <Settings showToast={showToast} user={user} />
               </MainLayout>
             </ProtectedRoute>
           } 
         />
         <Route path="/" element={<Navigate to="/inbox" replace />} />
       </Routes>
-      <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />
+      <ComposeModal
+        isOpen={isComposeOpen}
+        onClose={closeCompose}
+        context={composeContext}
+        showToast={showToast}
+      />
       <Toast toast={toast} onDismiss={dismissToast} />
     </Router>
   );

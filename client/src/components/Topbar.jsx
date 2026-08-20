@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { User, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, LogOut, Search, PenLine, X } from 'lucide-react';
 import { api } from '../services/apiClient';
 
-const Topbar = ({ showToast }) => {
+const Topbar = ({ showToast, onCompose, query, onQueryChange, searchPlaceholder }) => {
   const [user, setUser] = useState(null);
+  const searchable = typeof onQueryChange === 'function';
 
   useEffect(() => {
     api.checkAuth()
@@ -21,18 +22,52 @@ const Topbar = ({ showToast }) => {
       window.location.href = '/auth';
     } catch (err) {
       console.error('Logout failed', err);
+      showToast?.('Logout failed', 'error');
     }
   };
 
   return (
-    <header className="h-64 md:h-72 border-b border-border bg-white/80 backdrop-blur-md flex items-center justify-end px-16 md:px-24 sticky top-0 z-10 shrink-0">
+    <header className="h-64 md:h-72 border-b border-border bg-white/80 backdrop-blur-md flex items-center gap-12 md:gap-16 px-16 md:px-24 sticky top-0 z-10 shrink-0">
+      {searchable && (
+        <label className="flex items-center gap-8 flex-1 max-w-440 bg-slate-50 border border-border rounded-12 px-12 py-8 focus-within:border-primary/40 focus-within:bg-white transition-colors">
+          <Search size={15} className="text-slate-400 shrink-0" />
+          <input
+            type="search"
+            value={query || ''}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder={searchPlaceholder || 'Search mail...'}
+            className="bg-transparent border-none outline-none text-[13px] font-medium text-slate-700 placeholder:text-slate-400 flex-1 min-w-0 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => onQueryChange('')}
+              aria-label="Clear search"
+              className="text-slate-400 hover:text-slate-600 shrink-0"
+            >
+              <X size={14} />
+            </button>
+          ) : null}
+        </label>
+      )}
+
       {user?.isDemo && (
-        <span className="mr-auto text-[11px] font-black uppercase tracking-tighter text-primary bg-primary/10 border border-primary/20 px-10 py-4 rounded-full">
+        <span className="hidden sm:inline text-[11px] font-black uppercase tracking-tighter text-primary bg-primary/10 border border-primary/20 px-10 py-4 rounded-full shrink-0">
           Demo · read-only
         </span>
       )}
-      <div className="flex items-center gap-4 md:gap-12 ml-12 md:ml-24">
-        <div className="flex items-center gap-8 md:gap-10 hover:bg-slate-50 p-4 md:p-6 rounded-10 md:rounded-12 transition-colors group relative cursor-pointer group-hover:bg-slate-50">
+
+      <div className="flex items-center gap-4 md:gap-12 ml-auto shrink-0">
+        {onCompose && (
+          <button
+            onClick={() => onCompose()}
+            className="hidden md:flex items-center gap-8 bg-primary text-white px-14 py-8 rounded-12 font-bold text-[13px] hover:brightness-110 active:scale-[0.98] transition-all shadow-md shadow-primary/20"
+          >
+            <PenLine size={15} />
+            <span>Compose</span>
+          </button>
+        )}
+        <div className="flex items-center gap-8 md:gap-10 hover:bg-slate-50 p-4 md:p-6 rounded-10 md:rounded-12 transition-colors group relative cursor-pointer">
           <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center text-slate-500 overflow-hidden group-hover:border-primary/30">
             {user?.picture ? (
               <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />

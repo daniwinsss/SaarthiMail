@@ -1,24 +1,26 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Trash2, 
-  Archive, 
-  Mail, 
-  MoreVertical, 
+import {
+  ArrowLeft,
+  Archive,
+  CornerUpLeft,
+  CornerUpRight,
+  FileText,
   Sparkles,
   Calendar,
-  Flag,
   RotateCcw,
   Send,
   Save
 } from 'lucide-react';
 import AIInsightPanel from '../components/AIInsightPanel';
+import PriorityTag from '../components/PriorityTag';
 import { api } from '../services/apiClient';
 import { cn } from '../utils/cn';
+import { mapEmail } from '../utils/mapEmail';
+import { ATTACHMENTS, RELATED_THREADS, SENTIMENT } from '../data/mockData';
 
-const MailDetail = ({ showToast }) => {
+const MailDetail = ({ showToast, user }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
@@ -28,7 +30,9 @@ const MailDetail = ({ showToast }) => {
   const [aiReply, setAiReply] = useState('');
   const [meetingInfo, setMeetingInfo] = useState(null);
   const [replyLoading, setReplyLoading] = useState(false);
+  const [position, setPosition] = useState(null);
   const replyGeneratedForRef = useRef('');
+  const replyBoxRef = useRef(null);
   const [isLiveEmailReady, setIsLiveEmailReady] = useState(false);
 
   useEffect(() => {
@@ -83,28 +87,32 @@ const MailDetail = ({ showToast }) => {
     };
   }, [id, showToast]);
 
+  /* "N of M" in the wireframe header - real position within the stored inbox. */
+  useEffect(() => {
+    let active = true;
+    api.getMail()
+      .then((response) => {
+        if (!active) return;
+        const list = Array.isArray(response?.data) ? response.data : [];
+        const sorted = list
+          .map((item, index) => mapEmail(item, index))
+          .sort((a, b) => b.rawDate - a.rawDate);
+        const index = sorted.findIndex((item) => item.id === id);
+        setPosition(index >= 0 ? { index: index + 1, total: sorted.length } : null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
   const uiEmail = useMemo(() => {
     if (!email) return null;
-    const sender = email.sender || 'Unknown Sender';
-    const initials = sender
-      .split(' ')
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+    const mapped = mapEmail({ ...email, _id: email._id || id });
     return {
-      id: email._id || email.gmailId || id,
-      sender,
-      senderEmail: email.senderEmail || 'unknown@email.com',
-      subject: email.subject || email.snippet || 'No subject',
-      snippet: email.snippet || 'No preview available',
-      content: email.body || email.content || email.snippet || 'No content available',
-      priority: email.priority || 'low',
-      initials: initials || 'NA',
+      ...mapped,
+      content: mapped.content || 'No content available',
       summary: email.summary || '',
-      action: email.action || '',
-      reply: email.reply || '',
       meetingDate: email.meetingDate,
       meetingTime: email.meetingTime,
       calendarEventCreated: email.calendarEventCreated,
@@ -130,9 +138,15 @@ const MailDetail = ({ showToast }) => {
   const handleUseReply = async (reply) => {
     if (reply) {
       setReplyDraft(reply);
+      focusReply();
       return;
     }
     await handleGenerateReply();
+  };
+
+  const focusReply = () => {
+    replyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    replyBoxRef.current?.querySelector('textarea')?.focus();
   };
 
   const handleMeetingDetect = useCallback(async () => {
@@ -204,132 +218,173 @@ const MailDetail = ({ showToast }) => {
 
   if (!uiEmail) return <div className="p-24">Mail not found</div>;
 
+  const receivedAt = email?.createdAt || email?.date;
+  const meetingDetected = Boolean(uiEmail.meetingDate || meetingInfo?.hasMeeting);
+
   return (
     <div className="flex h-full bg-white overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-64 border-b border-border flex items-center justify-between px-16 md:px-24 shrink-0 bg-white">
-          <div className="flex items-center gap-8 md:gap-16">
-            <button 
-              onClick={() => navigate(-1)}
-              className="p-8 md:p-10 hover:bg-slate-100 rounded-12 transition-all"
-            >
-              <ArrowLeft size={18} className="text-slate-600" />
-            </button>
-            <div className="flex items-center gap-2 md:gap-4">
-              <button className="p-8 md:p-10 hover:bg-slate-100 rounded-12 transition-all text-slate-500">
-                <Archive size={18} />
-              </button>
-              <button className="p-8 md:p-10 hover:bg-slate-100 rounded-12 transition-all text-slate-500">
-                <Trash2 size={18} />
-              </button>
-              <button className="p-8 md:p-10 hover:bg-slate-100 rounded-12 transition-all text-slate-500 hidden sm:block">
-                <Mail size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-8">
-            <button 
-              onClick={() => setIsAIPanelOpen(true)}
-              className="lg:hidden flex items-center gap-6 px-12 py-8 rounded-12 bg-primary text-white font-bold text-[13px] shadow-lg shadow-primary/20"
-            >
-              <Sparkles size={14} fill="currentColor" />
-              <span>AI</span>
-            </button>
-            <button className="p-10 hover:bg-slate-100 rounded-12 transition-all text-slate-500">
-              <MoreVertical size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-16 md:px-40 py-24 md:py-32 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-16 md:px-32 py-20 md:py-24 custom-scrollbar">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-720 mx-auto"
+            className="max-w-720 mx-auto flex flex-col gap-16"
           >
-            <div className="flex flex-col md:flex-row md:items-start justify-between mb-32 gap-16">
-               <div>
-                  <div className="flex items-center gap-12 mb-8">
-                     <span className="text-[11px] font-bold bg-slate-100 text-slate-500 px-8 py-2 rounded-full uppercase tracking-tighter">Inbox</span>
-                     <ArrowLeft size={12} className="text-slate-400 rotate-180" />
-                      <span className="text-[14px] font-bold text-slate-900 truncate max-w-[200px] md:max-w-none">{uiEmail.subject}</span>
-                  </div>
-                  <h1 className="text-[24px] md:text-[28px] font-bold text-slate-900 tracking-tight leading-tight">
-                    {uiEmail.subject}
-                  </h1>
-                </div>
-                <div className="flex items-center gap-8 shrink-0">
-                  {uiEmail.priority === 'high' && (
-                    <span className="text-amber-600 bg-amber-50 px-10 py-4 rounded-full text-[11px] font-bold border border-amber-100 flex items-center gap-6">
-                       <Flag size={12} fill="currentColor" />
-                       Priority: High
-                    </span>
-                  )}
-                  {(uiEmail.meetingDate || meetingInfo?.hasMeeting) && (
-                    <span className="text-emerald-600 bg-emerald-50 px-10 py-4 rounded-full text-[11px] font-bold border border-emerald-100 flex items-center gap-6">
-                       <Calendar size={12} />
-                       Meeting Detected
-                    </span>
-                  )}
-                </div>
+            {/* Back / position */}
+            <div className="flex items-center gap-10">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-6 px-10 py-6 rounded-8 border border-slate-200 text-[12px] font-bold text-slate-600 hover:border-primary/40 hover:text-primary transition-all"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+              <button
+                onClick={() => setIsAIPanelOpen(true)}
+                className="lg:hidden flex items-center gap-6 px-10 py-6 rounded-8 bg-primary text-white font-bold text-[12px]"
+              >
+                <Sparkles size={12} fill="currentColor" />
+                <span>AI</span>
+              </button>
+              {position && (
+                <span className="ml-auto text-[11px] font-bold text-slate-400">
+                  {position.index} of {position.total}
+                </span>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-32 p-12 md:p-16 bg-slate-50/50 rounded-16 border border-slate-100 gap-12">
-              <div className="flex items-center gap-12">
-                <div className="w-40 h-40 md:w-44 md:h-44 bg-slate-900 rounded-full flex items-center justify-center text-white font-bold text-[14px] md:text-[15px]">
-                  {uiEmail.initials}
+            {/* Sender block */}
+            <div className="flex items-start gap-14">
+              <div className="w-44 h-44 bg-accent-light border border-primary/20 rounded-full flex items-center justify-center text-primary font-black text-[14px] shrink-0">
+                {uiEmail.initials}
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col gap-6">
+                <h1 className="text-[19px] md:text-[22px] font-black tracking-tight text-slate-900 leading-snug">
+                  {uiEmail.subject}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-10 gap-y-2">
+                  <span className="text-[13px] font-bold text-slate-600">
+                    {uiEmail.sender} &lt;{uiEmail.senderEmail}&gt;
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-400">
+                    to {user?.email ? user.email : 'me'}
+                  </span>
+                  <span className="ml-auto text-[11px] font-bold text-slate-400">
+                    {receivedAt
+                      ? new Date(receivedAt).toLocaleString([], {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'Today'}
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-8">
-                     <h4 className="font-bold text-[14px] md:text-[15px] text-slate-900">{uiEmail.sender}</h4>
-                     <span className="text-[11px] md:text-[12px] text-slate-400 hidden sm:block">&lt;{uiEmail.senderEmail}&gt;</span>
-                  </div>
-                  <p className="text-[12px] md:text-[13px] text-slate-500">To: You &lt;alex@saarthimail.com&gt;</p>
+                <div className="flex flex-wrap items-center gap-6 mt-2">
+                  <PriorityTag priority={uiEmail.priority} />
+                  {meetingDetected && (
+                    <span className="tag bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <Calendar size={10} />
+                      Meeting detected
+                    </span>
+                  )}
                 </div>
               </div>
-               <div className="text-[12px] md:text-[13px] text-slate-400 font-bold sm:text-right">
-                 {email?.createdAt ? new Date(email.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Today'}
-               </div>
             </div>
 
-            <div className="text-[14px] md:text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words mb-48 pl-2 md:pl-4">
+            <div className="h-px bg-border" />
+
+            {/* Body */}
+            <div className="md:pl-56 text-[14px] md:text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap break-words">
               {uiEmail.content}
             </div>
 
-            <div className="border border-slate-200 rounded-20 p-16 md:p-24 bg-white shadow-sm mb-40">
-                <textarea 
-                   placeholder="Write a reply..."
-                   value={replyDraft}
-                   onChange={(event) => setReplyDraft(event.target.value)}
-                   className="w-full h-100 md:h-120 resize-none border-none outline-none text-[14px] md:text-[15px] text-slate-700 placeholder:text-slate-400"
-                />
-               <div className="flex items-center justify-between mt-12 md:mt-16 pt-12 md:pt-16 border-t border-slate-100">
-                  <div className="flex gap-8 md:gap-10">
-                      <button className="flex items-center gap-6 md:gap-8 bg-primary text-white px-16 md:px-20 py-8 md:py-10 rounded-12 font-bold text-[13px] md:text-[14px] hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
-                         <Send size={16} />
-                         <span>Send</span>
-                      </button>
-                     <button className="flex items-center gap-6 md:gap-8 bg-white border border-slate-200 text-slate-700 px-12 md:px-16 py-8 md:py-10 rounded-12 font-bold text-[13px] md:text-[14px] hover:bg-slate-50 transition-all">
-                        <Save size={16} />
-                        <span className="hidden sm:inline">Save Draft</span>
-                        <span className="sm:hidden">Save</span>
-                     </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleGenerateReply}
-                    disabled={replyLoading}
-                    aria-label="Regenerate reply"
-                    title="Regenerate reply"
-                    className="p-8 md:p-10 hover:bg-slate-100 rounded-12 text-slate-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            {/* Attachments */}
+            <div className="md:pl-56 flex flex-col gap-6">
+              <span className="demo-note">Attachments · demo data</span>
+              <div className="flex flex-wrap gap-8">
+                {ATTACHMENTS.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-10 border border-slate-200 rounded-12 px-12 py-8 bg-white shadow-sm"
                   >
-                     <RotateCcw
-                       size={18}
-                       className={cn(replyLoading && "animate-spin text-primary")}
-                     />
+                    <FileText size={16} className="text-slate-400" />
+                    <div className="leading-tight">
+                      <p className="text-[12px] font-bold text-slate-700">{file.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400">{file.size}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Action row */}
+            <div className="md:pl-56 flex flex-wrap gap-8">
+              <button
+                onClick={focusReply}
+                className="flex items-center gap-8 bg-primary text-white px-16 py-8 rounded-12 font-bold text-[13px] hover:brightness-110 shadow-md shadow-primary/20 transition-all"
+              >
+                <CornerUpLeft size={15} />
+                <span>Reply</span>
+              </button>
+              <button
+                disabled
+                title="Not available yet - the API has no send endpoint."
+                className="flex items-center gap-8 bg-white border border-slate-200 text-slate-600 px-14 py-8 rounded-12 font-bold text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CornerUpRight size={15} />
+                <span>Forward</span>
+              </button>
+              <button
+                disabled
+                title="Not available yet - the API has no archive endpoint."
+                className="flex items-center gap-8 bg-white border border-slate-200 text-slate-600 px-14 py-8 rounded-12 font-bold text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Archive size={15} />
+                <span>Archive</span>
+              </button>
+            </div>
+
+            {/* Reply composer */}
+            <div
+              ref={replyBoxRef}
+              className="md:ml-56 border border-slate-200 rounded-20 p-16 md:p-20 bg-white shadow-sm mt-8"
+            >
+              <textarea
+                placeholder="Write a reply..."
+                value={replyDraft}
+                onChange={(event) => setReplyDraft(event.target.value)}
+                className="w-full h-120 resize-none border-none outline-none text-[14px] md:text-[15px] text-slate-700 placeholder:text-slate-400"
+              />
+              <div className="flex items-center justify-between mt-12 pt-12 border-t border-slate-100">
+                <div className="flex gap-8">
+                  <button
+                    disabled
+                    title="Not available yet - the API has no send endpoint."
+                    className="flex items-center gap-8 bg-slate-100 text-slate-400 px-16 py-8 rounded-12 font-bold text-[13px] cursor-not-allowed"
+                  >
+                    <Send size={15} />
+                    <span>Send</span>
+                  </button>
+                  <button className="flex items-center gap-8 bg-white border border-slate-200 text-slate-700 px-14 py-8 rounded-12 font-bold text-[13px] hover:bg-slate-50 transition-all">
+                    <Save size={15} />
+                    <span>Save Draft</span>
                   </button>
                 </div>
-             </div>
+                <button
+                  type="button"
+                  onClick={handleGenerateReply}
+                  disabled={replyLoading}
+                  aria-label="Regenerate reply"
+                  title="Regenerate reply"
+                  className="p-8 hover:bg-slate-100 rounded-12 text-slate-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <RotateCcw size={18} className={cn(replyLoading && 'animate-spin text-primary')} />
+                </button>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -347,6 +402,8 @@ const MailDetail = ({ showToast }) => {
         onUseReply={handleUseReply}
         onRegenerateReply={handleGenerateReply}
         replyLoading={replyLoading}
+        relatedThreads={RELATED_THREADS}
+        sentiment={SENTIMENT}
       />
     </div>
   );

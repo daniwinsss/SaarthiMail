@@ -1,8 +1,8 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Inbox, 
   Star, 
+  Calendar, 
   Settings, 
   Plus,
   Sparkles
@@ -54,6 +54,7 @@ const Sidebar = ({ onCompose }) => {
         <nav className="flex flex-col gap-2">
           <SidebarItem icon={Inbox} label="Inbox" to="/inbox" />
           <SidebarItem icon={Star} label="Priority" to="/priority" />
+          <SidebarItem icon={Calendar} label="Calendar" to="/calendar" />
           <SidebarItem icon={Settings} label="Settings" to="/settings" />
         </nav>
       </div>

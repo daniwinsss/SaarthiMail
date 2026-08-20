@@ -98,8 +98,70 @@ export const CALENDAR_EVENTS = [
   { id: 3, title: "Weekly Catchup", time: "Fri, 9:15 AM", type: "event" }
 ];
 
+/*
+ * ---------------------------------------------------------------------------
+ * DEMO DATA — everything below has no backend source yet.
+ * The AI pipeline (server/src/prompts/summarise.prompt.js) returns only
+ * summary / priority / action / reply, and there is no calendar-read endpoint,
+ * so the screens below render these fixtures and label them "Demo data".
+ * ---------------------------------------------------------------------------
+ */
+
+export const IS_DEMO_DATA = true;
+
+/** Wireframe 4b's confidence numbers, reused as a score badge on 4a cards. */
+export const AI_SCORES = {
+  urgent: 92,
+  important: 65,
+  later: 20,
+};
+
+export const SENTIMENT = {
+  label: 'Positive / Professional',
+  tone: 'positive',
+  score: 0.72,
+};
+
+export const RELATED_THREADS = [
+  { id: 'rt-1', title: 'Q3 Planning Discussion', date: 'Jun 12' },
+  { id: 'rt-2', title: 'Budget Templates', date: 'May 28' },
+];
+
+export const ATTACHMENTS = [
+  { id: 'att-1', name: 'Q3_Budget.xlsx', size: '248 KB' },
+];
+
+/** Wireframe 7b's "Email-Extracted Events" list. */
+export const EXTRACTED_EVENTS = [
+  { id: 'ex-1', title: 'Flight to Mumbai', date: 'Aug 25', source: 'Travel Itinerary email' },
+  { id: 'ex-2', title: 'Invoice Due', date: 'Aug 28', source: 'Vendor payment email' },
+  { id: 'ex-3', title: 'Webinar Registration', date: 'Sep 2', source: 'Conference invite' },
+];
+
+/** 7a's weekly grid. `day` is 0=Mon … 6=Sun, `hour` is 24h and must be in HOURS. */
+export const WEEK_HOURS = [9, 10, 11, 12];
+
+export const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export const WEEK_EVENTS = [
+  { id: 'ev-1', day: 0, hour: 9, title: 'Team Standup', kind: 'primary', time: '9:00 – 9:30' },
+  { id: 'ev-2', day: 2, hour: 9, title: 'Client Review', kind: 'important', time: '9:00 – 10:30' },
+  { id: 'ev-3', day: 1, hour: 10, title: 'Design Sprint', kind: 'success', time: '10:00 – 11:00' },
+  { id: 'ev-4', day: 4, hour: 10, title: '1:1 with PM', kind: 'primary', time: '10:00 – 10:45' },
+  { id: 'ev-5', day: 3, hour: 12, title: 'Deadline: API spec', kind: 'urgent', time: 'All day' },
+];
+
+export const EVENT_KINDS = {
+  primary: 'bg-accent-light border-l-primary text-primary',
+  important: 'bg-amber-50 border-l-important text-amber-700',
+  success: 'bg-emerald-50 border-l-secondary text-emerald-700',
+  urgent: 'bg-red-50 border-l-urgent text-urgent',
+};
+
+/** 7a's tasks sidebar. */
 export const TASKS = [
-  { id: 1, text: "Finalize Q4 Strategy Deck", source: "Aarav Mehta" },
-  { id: 2, text: "Process Invoice #2291", source: "Kavya Reddy" },
-  { id: 3, text: "Review Onboarding Prototype", source: "Priya Nair" }
+  { id: 1, text: "Reply to Aarav's proposal", priority: 'urgent', due: 'Due today', origin: 'From email' },
+  { id: 2, text: 'Review budget spreadsheet', priority: 'important', due: 'Due Thu', origin: 'From email' },
+  { id: 3, text: 'Send meeting notes', priority: 'later', due: 'Due Fri', origin: 'Self-created' },
+  { id: 4, text: 'Follow up with Priya', priority: 'important', due: 'Due Sat', origin: 'AI suggested' },
 ];

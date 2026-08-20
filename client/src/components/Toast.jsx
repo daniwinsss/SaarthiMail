@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 const baseClasses =
   "pointer-events-auto flex items-center gap-10 rounded-12 border px-16 py-12 text-[12px] font-bold shadow-lg";

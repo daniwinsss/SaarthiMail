@@ -1,122 +1,258 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, Plus, ArrowRight, User, Sparkles } from 'lucide-react';
-import { CALENDAR_EVENTS, TASKS } from '../data/mockData';
+import { ChevronLeft, ChevronRight, Plus, Sparkles } from 'lucide-react';
+import { cn } from '../utils/cn';
+import {
+  WEEK_DAYS,
+  WEEK_HOURS,
+  WEEK_EVENTS,
+  EVENT_KINDS,
+  TASKS,
+} from '../data/mockData';
 import AIInsightPanel from '../components/AIInsightPanel';
+import AIBadge from '../components/AIBadge';
+import { priorityMeta } from '../utils/priority';
 
-const Calendar = () => {
+const MS_DAY = 86400000;
+
+/** Monday of the week `offset` weeks away from today. */
+const weekStart = (offset) => {
+  const now = new Date();
+  const mondayIndex = (now.getDay() + 6) % 7;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayIndex);
+  return new Date(monday.getTime() + offset * 7 * MS_DAY);
+};
+
+const formatRange = (start) => {
+  const end = new Date(start.getTime() + 6 * MS_DAY);
+  const sameMonth = start.getMonth() === end.getMonth();
+  const month = start.toLocaleDateString([], { month: 'short' });
+  const endMonth = end.toLocaleDateString([], { month: 'short' });
+  return sameMonth
+    ? `${month} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`
+    : `${month} ${start.getDate()} – ${endMonth} ${end.getDate()}, ${end.getFullYear()}`;
+};
+
+const hourLabel = (hour) => `${hour > 12 ? hour - 12 : hour} ${hour >= 12 ? 'PM' : 'AM'}`;
+
+const isSameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const EventChip = ({ event }) => (
+  <div
+    className={cn(
+      'absolute inset-2 rounded-6 border-l-4 px-6 py-4 text-[10px] font-bold leading-tight overflow-hidden',
+      EVENT_KINDS[event.kind] || EVENT_KINDS.primary
+    )}
+    title={`${event.title} · ${event.time}`}
+  >
+    {event.title}
+  </div>
+);
+
+const TaskCard = ({ task }) => {
+  const meta = priorityMeta(task.priority);
+  return (
+    <div className="bg-white border border-slate-200 rounded-12 p-12 flex flex-col gap-6 shadow-sm">
+      <span className={cn('tag self-start', meta.tag)}>{meta.label}</span>
+      <span className="text-[12px] font-bold text-slate-800 leading-snug">{task.text}</span>
+      <span className="text-[10px] font-bold text-slate-400">
+        {task.origin} · {task.due}
+      </span>
+    </div>
+  );
+};
+
+const Calendar = ({ showToast, query }) => {
   const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [draftTask, setDraftTask] = useState('');
+  const [tasks, setTasks] = useState(TASKS);
+
+  const start = useMemo(() => weekStart(offset), [offset]);
+  const days = useMemo(
+    () =>
+      WEEK_DAYS.map((label, index) => {
+        const date = new Date(start.getTime() + index * MS_DAY);
+        return { label, date, isToday: isSameDay(date, new Date()) };
+      }),
+    [start]
+  );
+
+  const q = String(query || '').trim().toLowerCase();
+  const events = useMemo(
+    () => (q ? WEEK_EVENTS.filter((event) => event.title.toLowerCase().includes(q)) : WEEK_EVENTS),
+    [q]
+  );
+  const visibleTasks = useMemo(
+    () => (q ? tasks.filter((task) => task.text.toLowerCase().includes(q)) : tasks),
+    [tasks, q]
+  );
+
+  const eventAt = (dayIndex, hour) =>
+    events.find((event) => event.day === dayIndex && event.hour === hour);
+
+  const addTask = () => {
+    const text = draftTask.trim();
+    if (!text) return;
+    setTasks((current) => [
+      ...current,
+      { id: `local-${current.length + 1}`, text, priority: 'later', due: 'No due date', origin: 'Self-created' },
+    ]);
+    setDraftTask('');
+    showToast?.('Task added for this session — tasks are not persisted yet.', 'info');
+  };
 
   return (
     <div className="flex h-full bg-white overflow-hidden">
-      <div className="flex-1 flex flex-col overflow-hidden p-16 md:p-32">
-        <div className="max-w-960 mx-auto w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-24 md:mb-40 gap-16">
-            <h1 className="text-[24px] md:text-[28px] font-bold text-slate-900 tracking-tight">Calendar & Tasks</h1>
-            <div className="flex gap-8 md:gap-12">
-               <button 
-                  onClick={() => setIsAIPanelOpen(true)}
-                  className="lg:hidden flex items-center gap-6 bg-primary text-white px-12 py-8 rounded-12 font-bold text-[13px] shadow-lg shadow-primary/20"
-               >
-                  <Sparkles size={14} fill="currentColor" />
-                  <span>AI</span>
-               </button>
-               <button className="bg-primary/10 text-primary px-14 md:px-16 py-8 rounded-12 font-bold text-[13px] md:text-[14px] hover:bg-primary/20 transition-all">Add Event</button>
-               <button className="bg-slate-100 text-slate-700 px-14 md:px-16 py-8 rounded-12 font-bold text-[13px] md:text-[14px] hover:bg-slate-200 transition-all">Today</button>
-            </div>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* header */}
+        <div className="px-16 md:px-24 py-12 border-b border-border flex flex-wrap items-center justify-between gap-x-12 gap-y-8 shrink-0">
+          <div className="flex items-center gap-10 min-w-0">
+            <h1 className="text-[17px] md:text-[20px] font-black tracking-tighter text-slate-900">
+              {formatRange(start)}
+            </h1>
+            <span className="demo-note hidden sm:inline">Demo data</span>
           </div>
+          <div className="flex items-center gap-6 shrink-0">
+            <button
+              onClick={() => setOffset((value) => value - 1)}
+              aria-label="Previous week"
+              className="p-8 rounded-8 border border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary transition-all"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <button
+              onClick={() => setOffset(0)}
+              className="px-12 py-6 rounded-8 bg-primary text-white text-[12px] font-bold hover:brightness-110 transition-all"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setOffset((value) => value + 1)}
+              aria-label="Next week"
+              className="p-8 rounded-8 border border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary transition-all"
+            >
+              <ChevronRight size={15} />
+            </button>
+            <button
+              onClick={() => setIsAIPanelOpen(true)}
+              className="lg:hidden flex items-center gap-6 px-10 py-6 rounded-8 bg-primary/10 text-primary font-bold text-[12px]"
+            >
+              <Sparkles size={12} fill="currentColor" />
+              <span>AI</span>
+            </button>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-24 md:gap-32">
-            <div>
-              <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-400 mb-20 px-4">Upcoming Events</h2>
-              <div className="space-y-12">
-                {CALENDAR_EVENTS.map(event => (
-                  <motion.div 
-                    key={event.id}
-                    whileHover={{ y: -2 }}
-                    className="flex items-center justify-between p-16 bg-white border border-slate-200 rounded-20 shadow-sm hover:border-primary/30 transition-all"
-                  >
-                    <div className="flex items-center gap-16">
-                      <div className="w-40 h-40 bg-primary/10 rounded-12 flex items-center justify-center text-primary">
-                        <CalendarIcon size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-[15px] text-slate-800">{event.title}</h4>
-                        <p className="text-[13px] text-slate-500 font-medium">{event.time}</p>
-                      </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex flex-col md:flex-row min-h-full">
+            {/* week grid */}
+            <div className="flex-1 p-16 min-w-0">
+              <div className="overflow-x-auto custom-scrollbar">
+                <div
+                  className="grid border border-border rounded-12 overflow-hidden min-w-560"
+                  style={{ gridTemplateColumns: '60px repeat(7, minmax(0, 1fr))' }}
+                >
+                  <div className="border-b-2 border-border bg-slate-50/60 p-8" />
+                  {days.map((day) => (
+                    <div
+                      key={day.label}
+                      className={cn(
+                        'border-b-2 border-l border-border bg-slate-50/60 p-8 text-center text-[12px] font-bold',
+                        day.isToday ? 'text-primary' : 'text-slate-500'
+                      )}
+                    >
+                      {day.label} {day.date.getDate()}
                     </div>
-                    <button className="text-primary hover:bg-primary/5 p-8 rounded-full transition-all">
-                       <ArrowRight size={18} />
-                    </button>
+                  ))}
+
+                  {WEEK_HOURS.map((hour) => (
+                    <React.Fragment key={hour}>
+                      <div className="border-b border-border p-6 text-[10px] font-bold text-slate-300">
+                        {hourLabel(hour)}
+                      </div>
+                      {days.map((day, dayIndex) => {
+                        const event = eventAt(dayIndex, hour);
+                        return (
+                          <div
+                            key={`${day.label}-${hour}`}
+                            className={cn(
+                              'relative border-b border-l border-border h-56',
+                              day.isToday && 'bg-accent-light/40'
+                            )}
+                          >
+                            {event && <EventChip event={event} />}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              {q && !events.length && (
+                <p className="text-[12px] font-bold text-slate-400 mt-12">
+                  No events match "{query}".
+                </p>
+              )}
+            </div>
+
+            {/* tasks sidebar */}
+            <div className="w-full md:w-220 border-t md:border-t-0 md:border-l-2 border-border p-16 flex flex-col gap-12 shrink-0">
+              <div className="flex items-center justify-between gap-8">
+                <h2 className="text-[15px] font-black tracking-tight text-slate-900">Tasks</h2>
+                <AIBadge>AI</AIBadge>
+              </div>
+
+              <div className="flex flex-col gap-10">
+                {visibleTasks.map((task) => (
+                  <motion.div key={task.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+                    <TaskCard task={task} />
                   </motion.div>
                 ))}
+                {!visibleTasks.length && (
+                  <p className="text-[11px] font-bold text-slate-300 text-center py-12 border border-dashed border-slate-200 rounded-12">
+                    No tasks
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div>
-              <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-400 mb-20 px-4">Suggested Meeting Times</h2>
-              <div className="bg-slate-50 border border-slate-100 rounded-24 p-24">
-                 <div className="flex flex-wrap gap-12">
-                    {[
-                      { day: 'Tue', time: '11:00 AM' },
-                      { day: 'Thu', time: '3:45 PM' },
-                      { day: 'Fri', time: '1:30 PM' }
-                    ].map((slot, i) => (
-                      <div key={i} className="flex items-center justify-between bg-white border border-slate-200 p-12 rounded-16 w-full hover:border-primary transition-all group cursor-pointer">
-                         <div className="flex items-center gap-12">
-                            <div className="bg-primary/5 text-primary w-40 py-4 rounded-8 text-center">
-                               <span className="block text-[10px] font-bold uppercase">{slot.day}</span>
-                               <span className="block text-[14px] font-black leading-none">{slot.time.split(':')[0]}</span>
-                            </div>
-                            <span className="text-[14px] font-bold text-slate-700">{slot.time}</span>
-                         </div>
-                         <button className="text-[12px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-all">Add</button>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-48">
-             <div className="flex items-center justify-between mb-20">
-                <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-400 px-4">Tasks</h2>
-                <button className="text-primary font-bold text-[13px] flex items-center gap-4 hover:underline transition-all">
-                   View all tasks
-                </button>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                {TASKS.map(task => (
-                  <div key={task.id} className="flex items-center gap-12 p-16 border border-slate-200 rounded-16 bg-white hover:border-slate-300 transition-all">
-                     <div className="w-20 h-20 border-2 border-slate-300 rounded-6" />
-                     <div className="flex-1">
-                        <p className="text-[14px] font-bold text-slate-800">{task.text}</p>
-                        <p className="text-[12px] text-slate-400 font-medium">From {task.source}</p>
-                     </div>
-                  </div>
-                ))}
-                <div className="flex items-center gap-12 p-12 border border-slate-200 border-dashed rounded-16 bg-slate-50/50">
-                   <Plus size={16} className="text-slate-400" />
-                   <input 
-                      type="text" 
-                      placeholder="Add a task..." 
-                      className="bg-transparent border-none outline-none text-[14px] flex-1 text-slate-600 font-medium"
-                   />
-                   <button className="bg-primary text-white px-12 py-6 rounded-8 text-[12px] font-bold">Add Task</button>
+              <div className="mt-auto flex flex-col gap-8 pt-12">
+                <div className="flex items-center gap-8 border border-dashed border-slate-200 rounded-12 px-10 py-8 bg-slate-50/50">
+                  <Plus size={14} className="text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={draftTask}
+                    onChange={(event) => setDraftTask(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && addTask()}
+                    placeholder="Add a task..."
+                    className="bg-transparent border-none outline-none text-[13px] font-medium text-slate-600 flex-1 min-w-0"
+                  />
                 </div>
-             </div>
+                <button
+                  onClick={addTask}
+                  className="w-full bg-primary text-white py-8 rounded-12 font-bold text-[12px] hover:brightness-110 transition-all shadow-md shadow-primary/20"
+                >
+                  + Add Task
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <AIInsightPanel 
+      <AIInsightPanel
         isOpen={isAIPanelOpen}
         onClose={() => setIsAIPanelOpen(false)}
         mode="detail"
         insights={{
-          summary: "A meeting was detected in \"Project Sync?\". Want to add it to your calendar?",
-          reply: "You have a free slot Tuesday at 11 AM that matches a pending invite."
+          summary: 'A meeting was detected in "Project Sync?". Want to add it to your calendar?',
+          action: 'Add the detected meeting to Google Calendar.',
+          reply: 'You have a free slot Tuesday at 11 AM that matches a pending invite.',
         }}
+        onAddToCalendar={() =>
+          showToast?.('Open an email and use Add to Calendar to create a real event.', 'info')
+        }
       />
     </div>
   );
