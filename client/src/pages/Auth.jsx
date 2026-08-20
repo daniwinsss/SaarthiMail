@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, Lock, Star, RotateCcw } from 'lucide-react';
-import { API_BASE_URL } from '../services/apiClient';
+import { api, API_BASE_URL } from '../services/apiClient';
+
+const DEMO_LOGIN_ENABLED = import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true';
 
 const FeatureCard = ({ icon: Icon, label }) => (
   <div className="bg-white/50 border border-slate-200 p-16 rounded-20 flex flex-col items-center gap-12 w-120">
@@ -13,6 +16,9 @@ const FeatureCard = ({ icon: Icon, label }) => (
 );
 
 const Auth = ({ showToast }) => {
+  const navigate = useNavigate();
+  const [demoLoading, setDemoLoading] = useState(false);
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (!API_BASE_URL) {
@@ -20,6 +26,17 @@ const Auth = ({ showToast }) => {
       return;
     }
     window.location.href = `${API_BASE_URL}/api/auth/google`;
+  };
+
+  const handleDemoLogin = async () => {
+    try {
+      setDemoLoading(true);
+      await api.demoLogin();
+      navigate('/inbox');
+    } catch (err) {
+      showToast?.(err.message || 'Could not start the demo', 'error');
+      setDemoLoading(false);
+    }
   };
 
   return (
@@ -57,6 +74,27 @@ const Auth = ({ showToast }) => {
              </div>
              <span>Sign in with Google</span>
            </button>
+
+           {DEMO_LOGIN_ENABLED && (
+             <div className="space-y-8 -mt-16">
+               <div className="flex items-center gap-12">
+                 <div className="h-px flex-1 bg-slate-100" />
+                 <span className="text-[11px] font-black text-slate-300 uppercase tracking-tighter">or</span>
+                 <div className="h-px flex-1 bg-slate-100" />
+               </div>
+               <button
+                 onClick={handleDemoLogin}
+                 disabled={demoLoading}
+                 className="w-full bg-primary text-white py-14 rounded-20 font-bold text-[15px] flex items-center justify-center gap-8 hover:brightness-110 shadow-lg shadow-primary/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+               >
+                 <span>{demoLoading ? 'Starting demo…' : 'Explore the live demo'}</span>
+                 {!demoLoading && <ArrowRight size={16} />}
+               </button>
+               <p className="text-center text-[12px] font-bold text-slate-400">
+                 Read-only · no Google account needed
+               </p>
+             </div>
+           )}
 
            <div className="flex justify-center gap-12">
               <FeatureCard icon={Sparkles} label="AI Summaries" />

@@ -68,7 +68,9 @@ const generateAIReply = async (req, res) => {
         if (mailId) {
             try {
                 const ownerEmail = getOwnerEmail(req);
-                if (ownerEmail) {
+                // The demo inbox is read-only, so generated replies are returned
+                // but never written back over the seeded email.
+                if (ownerEmail && !req.user?.isDemo) {
                     await Email.findOneAndUpdate(
                         { _id: mailId, ownerEmail },
                         { reply }

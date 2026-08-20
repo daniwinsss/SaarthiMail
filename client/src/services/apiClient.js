@@ -45,6 +45,7 @@ export const api = {
       body: JSON.stringify({ emailText }),
     }),
   checkAuth: () => getJson("/api/auth/status"),
+  demoLogin: () => getJson("/api/auth/demo", { method: "POST" }),
   logout: () => getJson("/api/auth/logout"),
 };
 

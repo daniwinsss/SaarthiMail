@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const { fetchEmails, createDummyEmail, getSingleEmail,deleteEmail, updateEmail,getPriorityEmails,generateAIReply,detectMeeting,createMeetingEvent} = require("../controllers/mail.controller.js");
-router.post("/", createDummyEmail);
+const { blockDemoWrites } = require("../middlewares/auth.middleware.js");
+
+router.post("/", blockDemoWrites, createDummyEmail);
 router.get("/", fetchEmails);
 router.get(
     "/priority",
@@ -17,9 +19,10 @@ router.post(
 );
 router.post(
     "/calendar/create",
+    blockDemoWrites,
     createMeetingEvent
 );
 router.get("/:id", getSingleEmail);
-router.delete("/:id",deleteEmail);
-router.put("/:id",updateEmail)
+router.delete("/:id", blockDemoWrites, deleteEmail);
+router.put("/:id", blockDemoWrites, updateEmail)
 module.exports = router;

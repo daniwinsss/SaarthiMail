@@ -26,6 +26,11 @@ const Topbar = ({ showToast }) => {
 
   return (
     <header className="h-64 md:h-72 border-b border-border bg-white/80 backdrop-blur-md flex items-center justify-end px-16 md:px-24 sticky top-0 z-10 shrink-0">
+      {user?.isDemo && (
+        <span className="mr-auto text-[11px] font-black uppercase tracking-tighter text-primary bg-primary/10 border border-primary/20 px-10 py-4 rounded-full">
+          Demo · read-only
+        </span>
+      )}
       <div className="flex items-center gap-4 md:gap-12 ml-12 md:ml-24">
         <div className="flex items-center gap-8 md:gap-10 hover:bg-slate-50 p-4 md:p-6 rounded-10 md:rounded-12 transition-colors group relative cursor-pointer group-hover:bg-slate-50">
           <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center text-slate-500 overflow-hidden group-hover:border-primary/30">

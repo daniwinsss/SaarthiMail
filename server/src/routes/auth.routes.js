@@ -1,6 +1,7 @@
 const express = require("express");
 const passport = require("passport");
 const router = express.Router();
+const { buildDemoUser, isDemoLoginEnabled } = require("../config/demoUser.js");
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
@@ -26,6 +27,21 @@ router.get(
         res.redirect(`${clientUrl}/`);
     }
 );
+
+router.post("/demo", (req, res) => {
+    if (!isDemoLoginEnabled()) {
+        return res.status(404).json({
+            success: false,
+            message: "Demo login is not enabled",
+        });
+    }
+    req.login(buildDemoUser(), (err) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: "Could not start demo session" });
+        }
+        res.json({ success: true, message: "Demo session started" });
+    });
+});
 
 router.get("/status", (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {

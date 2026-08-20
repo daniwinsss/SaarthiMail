@@ -8,7 +8,11 @@ const connectDB = async () => {
         });
         console.log("MongoDB connected");
     } catch (error) {
-        console.error("Error connecting to MongoDB:", error);
+        // Exiting here keeps the process from reporting "Server running" while
+        // it has no database, which turns every later query into a bare
+        // unhandled rejection.
+        console.error("Error connecting to MongoDB:", error.message);
+        process.exit(1);
     }
 }
 

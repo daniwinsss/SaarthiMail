@@ -156,8 +156,8 @@ const MailDetail = ({ showToast }) => {
       const response = await api.createCalendarEvent(uiEmail.content);
       const eventLabel = response?.data?.summary || 'Calendar event created';
       showToast?.(eventLabel, 'success');
-    } catch {
-      showToast?.('Calendar creation failed', 'error');
+    } catch (err) {
+      showToast?.(err.message || 'Calendar creation failed', 'error');
     }
   };
 

@@ -12,6 +12,13 @@ require("./src/config/passport.js");
 
 const app = express();
 
+for (const key of ["MONGO_URI", "SESSION_SECRET"]) {
+  if (!process.env[key]) {
+    console.error(`${key} is not set. Add it to server/.env — see DEPLOY.md section 7.`);
+    process.exit(1);
+  }
+}
+
 const isProduction = process.env.NODE_ENV === "production";
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
@@ -55,14 +62,16 @@ const authroutes = require("./src/routes/auth.routes.js");
 
 const gmailRoutes = require("./src/routes/gmail.routes.js");
 
+const { ensureAuthenticated } = require("./src/middlewares/auth.middleware.js");
+
 app.get("/", (req, res) => {
   res.send("Saarthi mail api running");
 });
 
-app.use("/api/mail", mailroutes);
+app.use("/api/mail", ensureAuthenticated, mailroutes);
 
 app.use("/api/auth", authroutes);
 
-app.use("/api/gmail", gmailRoutes);
+app.use("/api/gmail", ensureAuthenticated, gmailRoutes);
 
 module.exports = app;

@@ -107,12 +107,24 @@ const parseGmailEmail = (emailData) => {
 
 const getGmailEmails = async (req, res) => {
     try {
-        const accessToken = req.user.accessToken;
-        const ownerEmail = req.user.email;
+        const accessToken = req.user?.accessToken;
+        const ownerEmail = req.user?.email;
         if (!ownerEmail) {
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized",
+            });
+        }
+        if (req.user?.isDemo) {
+            return res.status(403).json({
+                success: false,
+                message: "Gmail sync is disabled in the read-only demo.",
+            });
+        }
+        if (!accessToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Google session expired. Please sign in again.",
             });
         }
         const messages = await fetchEmails(accessToken);
@@ -167,8 +179,8 @@ const getGmailEmails = async (req, res) => {
 
 const getGmailMessage = async (req, res) => {
     try {
-        const accessToken = req.user.accessToken;
-        const ownerEmail = req.user.email;
+        const accessToken = req.user?.accessToken;
+        const ownerEmail = req.user?.email;
         if (!ownerEmail) {
             return res.status(401).json({
                 success: false,
@@ -176,6 +188,37 @@ const getGmailMessage = async (req, res) => {
             });
         }
         const { messageId } = req.params;
+
+        // Demo sessions have no Google token, so serve the seeded copy instead.
+        if (req.user?.isDemo) {
+            const seeded = await Email.findOne({ gmailId: messageId, ownerEmail });
+            if (!seeded) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Email not found",
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                data: {
+                    gmailId: seeded.gmailId,
+                    threadId: seeded.threadId,
+                    snippet: seeded.snippet,
+                    body: seeded.body,
+                    sender: seeded.sender,
+                    senderEmail: seeded.senderEmail,
+                    subject: seeded.subject,
+                    date: seeded.date,
+                },
+            });
+        }
+
+        if (!accessToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Google session expired. Please sign in again.",
+            });
+        }
         const emailData = await getEmailDetails(accessToken, messageId);
         const parsedEmail = parseGmailEmail(emailData);
 

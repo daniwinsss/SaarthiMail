@@ -1,5 +1,7 @@
 const dotenv = require("dotenv");
 dotenv.config();
+const applyDnsServers = require("./src/config/dns.js");
+applyDnsServers();
 const connectDB = require("./src/config/db");
 const app = require("./app");
 const PORT = process.env.PORT || 5000
