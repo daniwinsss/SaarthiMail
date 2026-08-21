@@ -105,6 +105,13 @@ const parseGmailEmail = (emailData) => {
     };
 };
 
+const fallbackSummaryFor = (email) => ({
+    summary: email.snippet || email.body?.slice(0, 180) || "Email synced from Gmail.",
+    priority: "low",
+    action: "",
+    reply: "",
+});
+
 const getGmailEmails = async (req, res) => {
     try {
         const accessToken = req.user?.accessToken;
@@ -128,46 +135,59 @@ const getGmailEmails = async (req, res) => {
             });
         }
         const messages = await fetchEmails(accessToken);
-        const detailEmails = await Promise.all(
+        const settledEmails = await Promise.all(
             messages.map(async (message) => {
-                const emailData = await getEmailDetails(
-                    accessToken,
-                    message.id
-                );
-                const parsedEmail = parseGmailEmail(emailData);
+                try {
+                    const emailData = await getEmailDetails(
+                        accessToken,
+                        message.id
+                    );
+                    const parsedEmail = parseGmailEmail(emailData);
 
-                const aiSummary = await summarizeEmail(parsedEmail.snippet);
-                await Email.findOneAndUpdate(
-                    {
-                        gmailId: parsedEmail.gmailId,
-                        // Scoped to the owner: without this an id collision
-                        // across accounts would reassign someone else's email.
-                        ownerEmail,
-                    },
-
-                    {
-                        ...parsedEmail,
-                        ownerEmail,
-                        summary: aiSummary.summary,
-                        priority: aiSummary.priority,
-                        action: aiSummary.action,
-                        reply: aiSummary.reply,
-                    },
-
-                    {
-                        upsert: true,
-
-                        new: true,
+                    let aiSummary = fallbackSummaryFor(parsedEmail);
+                    try {
+                        aiSummary = await summarizeEmail(parsedEmail.body || parsedEmail.snippet);
+                    } catch (summaryError) {
+                        console.log("AI summary failed:", summaryError.message);
                     }
-                );
-                return {
-                    id: parsedEmail.gmailId,
-                    threadId: parsedEmail.threadId,
-                    snippet: parsedEmail.snippet,
-                    ai: aiSummary,
-                };
+
+                    await Email.findOneAndUpdate(
+                        {
+                            gmailId: parsedEmail.gmailId,
+                            // Scoped to the owner: without this an id collision
+                            // across accounts would reassign someone else's email.
+                            ownerEmail,
+                        },
+
+                        {
+                            ...parsedEmail,
+                            ownerEmail,
+                            summary: aiSummary.summary,
+                            priority: aiSummary.priority,
+                            action: aiSummary.action,
+                            reply: aiSummary.reply,
+                        },
+
+                        {
+                            upsert: true,
+
+                            new: true,
+                        }
+                    );
+                    return {
+                        id: parsedEmail.gmailId,
+                        threadId: parsedEmail.threadId,
+                        snippet: parsedEmail.snippet,
+                        ai: aiSummary,
+                    };
+                } catch (messageError) {
+                    console.log(`Failed to sync Gmail message ${message.id}:`, messageError.message);
+                    return null;
+                }
             })
         );
+
+        const detailEmails = settledEmails.filter(Boolean);
         res.status(200).json({
             success: true,
             data: detailEmails,

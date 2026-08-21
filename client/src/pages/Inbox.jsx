@@ -116,12 +116,38 @@ const Inbox = ({ showToast, query, onCompose }) => {
         const response = await api.getMail();
         if (!active) return;
         const list = Array.isArray(response?.data) ? response.data : [];
-        setEmails(list);
+        if (list.length) {
+          setEmails(list);
+          setError(null);
+          return;
+        }
+
+        const auth = await api.checkAuth();
+        if (!active) return;
+
+        if (!auth?.isAuthenticated || auth.user?.isDemo) {
+          setEmails(list);
+          setError(null);
+          return;
+        }
+
+        const syncKey = `saarthi:auto-sync:${auth.user.email}`;
+        if (sessionStorage.getItem(syncKey)) {
+          setEmails(list);
+          setError(null);
+          return;
+        }
+
+        sessionStorage.setItem(syncKey, '1');
+        await api.getGmail();
+        const refreshed = await api.getMail();
+        if (!active) return;
+        setEmails(Array.isArray(refreshed?.data) ? refreshed.data : []);
         setError(null);
       } catch (err) {
         if (!active) return;
         setError(err.message || 'Failed to load inbox');
-        showToast?.('Failed to load inbox', 'error');
+        showToast?.(err.message || 'Failed to load inbox', 'error');
       } finally {
         if (active) setLoading(false);
       }
