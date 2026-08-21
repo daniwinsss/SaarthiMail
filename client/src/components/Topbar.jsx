@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, LogOut, Search, PenLine, X } from 'lucide-react';
 import { api } from '../services/apiClient';
 
 const Topbar = ({ showToast, onCompose, query, onQueryChange, searchPlaceholder }) => {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   const searchable = typeof onQueryChange === 'function';
 
   useEffect(() => {
@@ -25,8 +27,8 @@ const Topbar = ({ showToast, onCompose, query, onQueryChange, searchPlaceholder 
       console.error('Logout failed', err);
       showToast?.('Logout failed', 'error');
     } finally {
-      // Full reload rather than a router push, so no in-memory state survives.
-      window.location.href = '/auth';
+      // Stay inside the SPA so hosts without an /auth rewrite do not 404.
+      navigate('/auth', { replace: true });
     }
   };
 

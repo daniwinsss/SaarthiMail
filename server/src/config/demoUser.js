@@ -1,3 +1,5 @@
+const { startOfWeekInIST } = require("../utils/istDate.js");
+
 const isDemoLoginEnabled = () =>
     process.env.ENABLE_DEMO_LOGIN === "true" && !!process.env.DEMO_USER_EMAIL;
 
@@ -11,14 +13,8 @@ const buildDemoUser = () => ({
     isDemo: true,
 });
 
-/** Monday 00:00 of the week containing `date`. */
-const weekStart = (date) => {
-    const start = new Date(date);
-    const weekday = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - weekday);
-    start.setHours(0, 0, 0, 0);
-    return start;
-};
+/** Monday 00:00 IST of the week containing `date`. */
+const weekStart = (date) => startOfWeekInIST(date);
 
 /** `minutesPastHour` above 59 rolls forward, so an end slot is hour + duration. */
 const at = (monday, dayOffset, hour, minutesPastHour = 0) => {

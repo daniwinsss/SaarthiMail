@@ -1,4 +1,5 @@
 const { google } = require("googleapis");
+const { addDaysInIST, fromISTParts, toISTParts } = require("../../utils/istDate.js");
 
 const MONTHS = {
     january: 0,
@@ -15,47 +16,151 @@ const MONTHS = {
     december: 11,
 };
 
+const WEEKDAYS = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+};
+
 const stripOrdinal = (value = "") => value.replace(/(\d)(st|nd|rd|th)/gi, "$1");
 
-const parseEmailDateTime = (dateText, timeText) => {
-    if (!dateText || !timeText) return null;
-
-    const cleanedDate = stripOrdinal(dateText).trim();
-    const dateMatch = cleanedDate.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-    const timeMatch = timeText.trim().match(/(\d{1,2}):(\d{2})\s*([AP]M)/i);
-
-    if (!dateMatch || !timeMatch) return null;
-
-    const day = Number(dateMatch[1]);
-    const monthName = dateMatch[2].toLowerCase();
-    const year = Number(dateMatch[3]);
-    const monthIndex = MONTHS[monthName];
-    if (monthIndex === undefined) return null;
-
-    let hour = Number(timeMatch[1]);
-    const minute = Number(timeMatch[2]);
-    const meridiem = timeMatch[3].toUpperCase();
-
-    if (meridiem === "PM" && hour !== 12) hour += 12;
-    if (meridiem === "AM" && hour === 12) hour = 0;
-
-    const pad = (value) => String(value).padStart(2, "0");
-    return `${year}-${pad(monthIndex + 1)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00+05:30`;
+const startOfTodayInIST = (baseDate = new Date()) => {
+    const parts = toISTParts(baseDate);
+    return fromISTParts({
+        year: parts.year,
+        month: parts.month,
+        day: parts.day,
+    });
 };
 
 const formatDateTimeWithOffset = (date) => {
-    const pad = (value) => String(value).padStart(2, "0");
-    return [
-        date.getFullYear(),
-        pad(date.getMonth() + 1),
-        pad(date.getDate()),
-    ].join("-") + `T${pad(date.getHours())}:${pad(date.getMinutes())}:00+05:30`;
+    return date.toISOString();
+};
+
+const parseExplicitDate = (dateText, baseDate = new Date()) => {
+    if (!dateText) return null;
+
+    const cleanedDate = stripOrdinal(String(dateText)).trim();
+    const today = startOfTodayInIST(baseDate);
+    const lower = cleanedDate.toLowerCase();
+
+    if (lower.includes("day after tomorrow")) {
+        return addDaysInIST(today, 2);
+    }
+
+    if (/\btomorrow\b/.test(lower)) {
+        return addDaysInIST(today, 1);
+    }
+
+    if (/\btoday\b/.test(lower)) {
+        return today;
+    }
+
+    let match = cleanedDate.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+    if (match) {
+        const day = Number(match[1]);
+        const monthIndex = MONTHS[match[2].toLowerCase()];
+        const year = Number(match[3]);
+        if (monthIndex !== undefined) {
+            return fromISTParts({
+                year,
+                month: monthIndex + 1,
+                day,
+            });
+        }
+    }
+
+    match = cleanedDate.match(/([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+    if (match) {
+        const monthIndex = MONTHS[match[1].toLowerCase()];
+        const day = Number(match[2]);
+        const year = Number(match[3]);
+        if (monthIndex !== undefined) {
+            return fromISTParts({
+                year,
+                month: monthIndex + 1,
+                day,
+            });
+        }
+    }
+
+    match = lower.match(/\b(?:next|this|coming)?\s*(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);
+    if (match) {
+        const targetDay = WEEKDAYS[match[1]];
+        const currentDay = toISTParts(today).dayOfWeek;
+        let delta = (targetDay - currentDay + 7) % 7;
+
+        if (delta === 0) {
+            delta = 7;
+        }
+
+        return addDaysInIST(today, delta);
+    }
+
+    return null;
+};
+
+const parseExplicitTime = (timeText, emailText = "") => {
+    const combined = `${timeText || ""} ${emailText}`.replace(/\s+/g, " ").trim().toLowerCase();
+    const explicitMatch =
+        combined.match(/\b(\d{1,2}):(\d{2})\s*([ap]m)\b/i) ||
+        combined.match(/\b(\d{1,2})\s*([ap]m)\b/i);
+
+    if (explicitMatch) {
+        const hour = Number(explicitMatch[1]);
+        const minute = explicitMatch[2] && explicitMatch[3] ? Number(explicitMatch[2]) : 0;
+        const meridiem = (explicitMatch[3] || explicitMatch[2] || "").toUpperCase();
+        let normalizedHour = hour;
+
+        if (meridiem === "PM" && normalizedHour !== 12) normalizedHour += 12;
+        if (meridiem === "AM" && normalizedHour === 12) normalizedHour = 0;
+
+        return { hour: normalizedHour, minute };
+    }
+
+    if (combined.includes("noon")) {
+        return { hour: 12, minute: 0 };
+    }
+    if (combined.includes("morning")) {
+        return { hour: 9, minute: 0 };
+    }
+    if (combined.includes("afternoon")) {
+        return { hour: 15, minute: 0 };
+    }
+    if (combined.includes("evening")) {
+        return { hour: 18, minute: 0 };
+    }
+    if (combined.includes("night")) {
+        return { hour: 19, minute: 0 };
+    }
+
+    return { hour: 9, minute: 0 };
+};
+
+const resolveMeetingMoment = (dateText, timeText, emailText = "") => {
+    const date = parseExplicitDate(dateText || emailText);
+    if (!date) return null;
+
+    const time = parseExplicitTime(timeText, emailText);
+    const parts = toISTParts(date);
+
+    return fromISTParts({
+        year: parts.year,
+        month: parts.month,
+        day: parts.day,
+        hours: time.hour,
+        minutes: time.minute,
+    }).toISOString();
 };
 
 const extractMeetingSlots = (emailText = "") => {
     const normalized = emailText.replace(/\s+/g, " ");
     const slotRegex =
-        /(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+\s+\d{4}).{0,40}?at\s+(\d{1,2}:\d{2}\s*[AP]M)/gi;
+        /(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+\s+\d{4}).{0,40}?at\s+(\d{1,2}:\d{2}\s*[AP]M|\d{1,2}\s*[AP]M)/gi;
 
     const slots = [];
     let match;
@@ -70,7 +175,33 @@ const extractMeetingSlots = (emailText = "") => {
         return { start: slots[0], end: slots[1] };
     }
 
-    return { start: slots[0] || null, end: null };
+    const dateHints = [
+        "day after tomorrow",
+        "tomorrow",
+        "today",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ];
+
+    const detectedDate = dateHints.find((hint) => normalized.toLowerCase().includes(hint));
+    const detectedTime = normalized.match(/\b(\d{1,2}:\d{2}\s*[AP]M|\d{1,2}\s*[AP]M|morning|afternoon|evening|noon|night)\b/i);
+
+    if (detectedDate || detectedTime) {
+        return {
+            start: {
+                date: detectedDate || null,
+                time: detectedTime ? detectedTime[1] : null,
+            },
+            end: null,
+        };
+    }
+
+    return { start: null, end: null };
 };
 
 const createCalendarEvent = async (
@@ -105,10 +236,10 @@ const createCalendarEvent = async (
             meetingData?.end || slotFromText.end || null;
 
         const startDateTime =
-            parseEmailDateTime(startCandidate?.date, startCandidate?.time) ||
+            resolveMeetingMoment(startCandidate?.date, startCandidate?.time, emailText) ||
             null;
         const endDateTime =
-            parseEmailDateTime(endCandidate?.date, endCandidate?.time) || null;
+            resolveMeetingMoment(endCandidate?.date, endCandidate?.time, emailText) || null;
 
         if (!startDateTime) {
             throw new Error(

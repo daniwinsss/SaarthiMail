@@ -5,12 +5,11 @@ const extractMeeting =
 const createCalendarEvent = require("../services/google/createCalenderEvent.js");
 const listCalendarEvents = require("../services/google/listCalendarEvents.js");
 const { buildDemoCalendarEvents } = require("../config/demoUser.js");
+const { startOfWeekInIST } = require("../utils/istDate.js");
 
 /** Monday 00:00 → next Monday 00:00, used when the client sends no range. */
 const defaultWeekRange = () => {
-    const start = new Date();
-    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-    start.setHours(0, 0, 0, 0);
+    const start = startOfWeekInIST(new Date());
     const end = new Date(start);
     end.setDate(end.getDate() + 7);
     return { timeMin: start.toISOString(), timeMax: end.toISOString() };
