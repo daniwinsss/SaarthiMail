@@ -44,9 +44,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ emailText }),
     }),
+  listCalendarEvents: (timeMin, timeMax) =>
+    getJson(
+      `/api/mail/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`
+    ),
   checkAuth: () => getJson("/api/auth/status"),
   demoLogin: () => getJson("/api/auth/demo", { method: "POST" }),
-  logout: () => getJson("/api/auth/logout"),
+  logout: () => getJson("/api/auth/logout", { method: "POST" }),
 };
 
 export { API_BASE_URL };

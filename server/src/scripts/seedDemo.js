@@ -142,6 +142,16 @@ const seed = async () => {
         console.error("DEMO_USER_EMAIL is not set. Aborting.");
         process.exit(1);
     }
+    // This script deletes every email owned by DEMO_USER_EMAIL before seeding.
+    // Pointed at a real address it would destroy that person's mail, so refuse
+    // anything outside the reserved demo domain.
+    if (!/@saarthimail\.app$/i.test(DEMO_EMAIL)) {
+        console.error(
+            `Refusing to seed: DEMO_USER_EMAIL ("${DEMO_EMAIL}") must be an @saarthimail.app address. ` +
+            "Seeding wipes all mail owned by that address."
+        );
+        process.exit(1);
+    }
 
     applyDnsServers();
     await connectDB();

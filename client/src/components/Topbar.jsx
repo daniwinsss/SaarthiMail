@@ -17,12 +17,16 @@ const Topbar = ({ showToast, onCompose, query, onQueryChange, searchPlaceholder 
   }, []);
 
   const handleLogout = async () => {
+    setUser(null);
     try {
       await api.logout();
-      window.location.href = '/auth';
     } catch (err) {
+      // A failed request must not strand the user in a logged-in-looking UI.
       console.error('Logout failed', err);
       showToast?.('Logout failed', 'error');
+    } finally {
+      // Full reload rather than a router push, so no in-memory state survives.
+      window.location.href = '/auth';
     }
   };
 

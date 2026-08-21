@@ -8,7 +8,6 @@ import AIBadge from '../components/AIBadge';
 import { api } from '../services/apiClient';
 import { mapEmails, matchesQuery } from '../utils/mapEmail';
 import { PRIORITY_KEYS, PRIORITY_META } from '../utils/priority';
-import { AI_SCORES } from '../data/mockData';
 
 const PriorityCard = ({ email, accent }) => {
   const navigate = useNavigate();
@@ -29,12 +28,6 @@ const PriorityCard = ({ email, accent }) => {
           {email.initials}
         </div>
         <span className="text-[13px] font-bold text-slate-900 truncate">{email.sender}</span>
-        <span
-          className="ml-auto text-[10px] font-black text-slate-400 shrink-0"
-          title="AI confidence - demo data"
-        >
-          {AI_SCORES[email.priority]}
-        </span>
       </div>
       <span className="text-[12px] font-semibold text-slate-700 line-clamp-2">{email.subject}</span>
       <span className="text-[10px] font-bold text-slate-400">{email.relative}</span>

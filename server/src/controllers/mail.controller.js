@@ -3,6 +3,77 @@ const generateReply = require("../services/ai/generateReply.js");
 const extractMeeting =
     require("../services/ai/extractMeeting.js");
 const createCalendarEvent = require("../services/google/createCalenderEvent.js");
+const listCalendarEvents = require("../services/google/listCalendarEvents.js");
+const { buildDemoCalendarEvents } = require("../config/demoUser.js");
+
+/** Monday 00:00 → next Monday 00:00, used when the client sends no range. */
+const defaultWeekRange = () => {
+    const start = new Date();
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return { timeMin: start.toISOString(), timeMax: end.toISOString() };
+};
+
+const getCalendarEvents = async (req, res) => {
+    const fallback = defaultWeekRange();
+    const timeMin = req.query.timeMin || fallback.timeMin;
+    const timeMax = req.query.timeMax || fallback.timeMax;
+
+    if (Number.isNaN(Date.parse(timeMin)) || Number.isNaN(Date.parse(timeMax))) {
+        return res.status(400).json({
+            success: false,
+            message: "timeMin and timeMax must be ISO date strings",
+        });
+    }
+
+    // The demo account has no Google token; its events are generated server-side
+    // so fixtures can never reach a real session.
+    if (req.user?.isDemo) {
+        return res.status(200).json({
+            success: true,
+            data: buildDemoCalendarEvents(timeMin),
+            isDemo: true,
+        });
+    }
+
+    if (!req.user?.accessToken) {
+        return res.status(401).json({
+            success: false,
+            message: "Your Google session has expired. Please sign in again.",
+            reauth: true,
+        });
+    }
+
+    try {
+        const events = await listCalendarEvents(req.user.accessToken, timeMin, timeMax);
+        res.status(200).json({ success: true, data: events });
+    } catch (error) {
+        const status = error?.code || error?.response?.status || 500;
+
+        // Sessions created before the calendar scope was requested, and expired
+        // tokens, both land here. Tell the user to reconnect instead of leaving
+        // an empty grid that looks like "no events".
+        if (status === 401 || status === 403) {
+            return res.status(status).json({
+                success: false,
+                message:
+                    "Saarthi can't read your Google Calendar yet. Sign out and sign in again to grant calendar access.",
+                reauth: true,
+            });
+        }
+
+        console.log(error);
+        res.status(status === 400 ? 400 : 500).json({
+            success: false,
+            message:
+                error?.response?.data?.error?.message ||
+                error?.message ||
+                "Error while loading calendar events",
+        });
+    }
+};
 const createMeetingEvent = async(req,res)=>{
     try {
         const accessToken = req.user?.accessToken || req.body?.accessToken;
@@ -241,4 +312,4 @@ const updateEmail = async (req, res) => {
         })
     }
 }
-module.exports = { fetchEmails, createDummyEmail, getSingleEmail, deleteEmail, updateEmail, getPriorityEmails, generateAIReply, detectMeeting,createMeetingEvent };
+module.exports = { fetchEmails, createDummyEmail, getSingleEmail, deleteEmail, updateEmail, getPriorityEmails, generateAIReply, detectMeeting,createMeetingEvent, getCalendarEvents };

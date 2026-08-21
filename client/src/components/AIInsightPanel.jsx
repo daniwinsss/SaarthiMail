@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, Calendar, RotateCcw, X } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { priorityMeta } from '../utils/priority';
 
 const AIInsightPanel = ({
   isOpen,
@@ -18,6 +19,9 @@ const AIInsightPanel = ({
     Boolean(insights.reply) &&
     !insights.reply.startsWith("No suggested reply") &&
     !insights.reply.startsWith("Generating suggested reply");
+  // Callers with no email context (e.g. the calendar) pass no reply at all --
+  // render nothing rather than inventing one.
+  const showReplySection = Boolean(insights.reply);
   const content = (
     <div className="flex flex-col gap-24 h-full">
       <div>
@@ -40,8 +44,10 @@ const AIInsightPanel = ({
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 {mode === 'inbox' ? 'Summary' : 'AI Summary'}
               </span>
-              {mode === 'detail' && (
-                <span className="bg-amber-100 text-amber-600 text-[10px] font-bold px-8 py-2 rounded-full uppercase tracking-tight">High Priority</span>
+              {insights.priority && (
+                <span className={cn('tag uppercase tracking-tight', priorityMeta(insights.priority).tag)}>
+                  {priorityMeta(insights.priority).label}
+                </span>
               )}
            </div>
            <p className="text-[14px] leading-relaxed text-slate-700 font-medium">
@@ -71,11 +77,12 @@ const AIInsightPanel = ({
         </div>
       </div>
 
+      {showReplySection && (
       <div className={cn(mode === 'inbox' ? 'mt-auto' : '')}>
          <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-12 px-4">Suggested Reply</h3>
          <div className="bg-white border border-slate-200 p-16 rounded-16 shadow-sm">
             <p className="text-[12px] text-slate-500 leading-relaxed italic mb-12">
-              {insights.reply || "Hi Aarav, thanks for sending this over. I'll review slides 4-9 tonight."}
+              {insights.reply}
             </p>
             <div className="flex gap-8">
                <button
@@ -104,6 +111,7 @@ const AIInsightPanel = ({
          </div>
          {mode === 'inbox' && <p className="text-[10px] text-slate-400 text-center mt-12">All insights are private and processed securely.</p>}
       </div>
+      )}
 
       {/* Wireframe 3a: Related Threads + Sentiment. Rendered only when the caller
           supplies them, so the inbox/priority/settings panels are unaffected. */}

@@ -2,6 +2,7 @@ const express = require("express");
 const passport = require("passport");
 const router = express.Router();
 const { buildDemoUser, isDemoLoginEnabled } = require("../config/demoUser.js");
+const { SESSION_COOKIE_NAME, sessionCookieOptions } = require("../config/sessionCookie.js");
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
@@ -51,14 +52,36 @@ router.get("/status", (req, res) => {
     }
 });
 
-router.get("/logout", (req, res) => {
+// Logging out is a state change, so it is a POST. `req.logout` only detaches
+// the user from the session -- the session document survives in the Mongo store
+// until its 14-day TTL, so destroy it explicitly, then clear the cookie using
+// the same attributes it was set with (see config/sessionCookie.js).
+const handleLogout = (req, res) => {
+    const finish = () => {
+        res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions());
+        res.json({ success: true, message: "Logged out successfully" });
+    };
+
     req.logout((err) => {
         if (err) {
             return res.status(500).json({ success: false, message: "Error logging out" });
         }
-        res.clearCookie("connect.sid");
-        res.json({ success: true, message: "Logged out successfully" });
+
+        if (!req.session) return finish();
+
+        req.session.destroy((destroyErr) => {
+            if (destroyErr) {
+                console.log("Failed to destroy session:", destroyErr.message);
+            }
+            // Clear the cookie regardless: an orphaned store record is
+            // recoverable, a browser that stays authenticated is not.
+            finish();
+        });
     });
-});
+};
+
+router.post("/logout", handleLogout);
+// Retained so links and any already-deployed client build keep working.
+router.get("/logout", handleLogout);
 
 module.exports = router;

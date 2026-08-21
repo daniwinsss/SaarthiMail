@@ -6,7 +6,6 @@ import {
   Archive,
   CornerUpLeft,
   CornerUpRight,
-  FileText,
   Sparkles,
   Calendar,
   RotateCcw,
@@ -18,7 +17,6 @@ import PriorityTag from '../components/PriorityTag';
 import { api } from '../services/apiClient';
 import { cn } from '../utils/cn';
 import { mapEmail } from '../utils/mapEmail';
-import { ATTACHMENTS, RELATED_THREADS, SENTIMENT } from '../data/mockData';
 
 const MailDetail = ({ showToast, user }) => {
   const { id } = useParams();
@@ -299,25 +297,6 @@ const MailDetail = ({ showToast, user }) => {
               {uiEmail.content}
             </div>
 
-            {/* Attachments */}
-            <div className="md:pl-56 flex flex-col gap-6">
-              <span className="demo-note">Attachments · demo data</span>
-              <div className="flex flex-wrap gap-8">
-                {ATTACHMENTS.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center gap-10 border border-slate-200 rounded-12 px-12 py-8 bg-white shadow-sm"
-                  >
-                    <FileText size={16} className="text-slate-400" />
-                    <div className="leading-tight">
-                      <p className="text-[12px] font-bold text-slate-700">{file.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400">{file.size}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="h-px bg-border" />
 
             {/* Action row */}
@@ -395,6 +374,7 @@ const MailDetail = ({ showToast, user }) => {
         mode="detail"
         insights={{
           summary: uiEmail.summary || uiEmail.snippet,
+          priority: uiEmail.priority,
           reply: aiReply || uiEmail.reply || (replyLoading ? 'Generating suggested reply…' : 'No suggested reply'),
           action: uiEmail.action || '',
         }}
@@ -402,8 +382,6 @@ const MailDetail = ({ showToast, user }) => {
         onUseReply={handleUseReply}
         onRegenerateReply={handleGenerateReply}
         replyLoading={replyLoading}
-        relatedThreads={RELATED_THREADS}
-        sentiment={SENTIMENT}
       />
     </div>
   );

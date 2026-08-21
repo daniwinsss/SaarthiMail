@@ -1,19 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Sparkles, RefreshCw } from 'lucide-react';
 import { cn } from '../utils/cn';
-import {
-  WEEK_DAYS,
-  WEEK_HOURS,
-  WEEK_EVENTS,
-  EVENT_KINDS,
-  TASKS,
-} from '../data/mockData';
+import { WEEK_DAYS, EVENT_KINDS } from '../data/calendarUi';
 import AIInsightPanel from '../components/AIInsightPanel';
 import AIBadge from '../components/AIBadge';
+import { api } from '../services/apiClient';
 import { priorityMeta } from '../utils/priority';
 
 const MS_DAY = 86400000;
+
+/** Stable identity so memos downstream don't re-run on every render. */
+const NO_EVENTS = [];
+
+/** Visible rows of the week grid. Wide enough that real events aren't hidden. */
+const DAY_HOURS = Array.from({ length: 15 }, (_, index) => index + 7); // 7 AM – 9 PM
+const FIRST_HOUR = DAY_HOURS[0];
+const LAST_HOUR = DAY_HOURS[DAY_HOURS.length - 1];
 
 /** Monday of the week `offset` weeks away from today. */
 const weekStart = (offset) => {
@@ -38,13 +41,23 @@ const hourLabel = (hour) => `${hour > 12 ? hour - 12 : hour} ${hour >= 12 ? 'PM'
 const isSameDay = (a, b) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
+const clockTime = (value) =>
+  new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+/** "9:00 AM – 9:30 AM", or just the start when Google gave us no end. */
+const eventTimeLabel = (event) => {
+  if (event.allDay) return 'All day';
+  const start = clockTime(event.start);
+  return event.end ? `${start} – ${clockTime(event.end)}` : start;
+};
+
 const EventChip = ({ event }) => (
   <div
     className={cn(
-      'absolute inset-2 rounded-6 border-l-4 px-6 py-4 text-[10px] font-bold leading-tight overflow-hidden',
+      'rounded-6 border-l-4 px-6 py-4 text-[10px] font-bold leading-tight overflow-hidden',
       EVENT_KINDS[event.kind] || EVENT_KINDS.primary
     )}
-    title={`${event.title} · ${event.time}`}
+    title={`${event.title} · ${eventTimeLabel(event)}${event.location ? ` · ${event.location}` : ''}`}
   >
     {event.title}
   </div>
@@ -67,7 +80,12 @@ const Calendar = ({ showToast, query }) => {
   const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
   const [offset, setOffset] = useState(0);
   const [draftTask, setDraftTask] = useState('');
-  const [tasks, setTasks] = useState(TASKS);
+  const [tasks, setTasks] = useState([]);
+
+  // One atomic result object keyed by the range it belongs to, so `loading` is
+  // derived rather than toggled -- no setState in the effect body.
+  const [result, setResult] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const start = useMemo(() => weekStart(offset), [offset]);
   const days = useMemo(
@@ -79,18 +97,87 @@ const Calendar = ({ showToast, query }) => {
     [start]
   );
 
+  const timeMin = start.toISOString();
+  const requestKey = `${timeMin}#${reloadToken}`;
+
+  useEffect(() => {
+    let cancelled = false;
+    const timeMax = new Date(start.getTime() + 7 * MS_DAY).toISOString();
+
+    const load = async () => {
+      try {
+        const response = await api.listCalendarEvents(timeMin, timeMax);
+        if (cancelled) return;
+        setResult({
+          requestKey,
+          events: response?.data || [],
+          error: null,
+          needsReauth: false,
+          fetchedAt: new Date().getTime(),
+        });
+      } catch (err) {
+        if (cancelled) return;
+        const message = err.message || 'Could not load your calendar.';
+        // Never fall back to fixtures -- an empty grid with an error beats
+        // showing someone events that aren't theirs.
+        setResult({
+          requestKey,
+          events: [],
+          error: message,
+          needsReauth: /sign in again|calendar access/i.test(message),
+          fetchedAt: new Date().getTime(),
+        });
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [start, timeMin, requestKey]);
+
+  const loading = result?.requestKey !== requestKey;
+  const allEvents = result?.requestKey === requestKey ? result.events : NO_EVENTS;
+  const error = result?.requestKey === requestKey ? result.error : null;
+  const needsReauth = result?.requestKey === requestKey ? result.needsReauth : false;
+  const fetchedAt = result?.fetchedAt ?? 0;
+
   const q = String(query || '').trim().toLowerCase();
   const events = useMemo(
-    () => (q ? WEEK_EVENTS.filter((event) => event.title.toLowerCase().includes(q)) : WEEK_EVENTS),
-    [q]
+    () => (q ? allEvents.filter((event) => event.title.toLowerCase().includes(q)) : allEvents),
+    [allEvents, q]
   );
+
+  const allDayEvents = useMemo(() => events.filter((event) => event.allDay), [events]);
+
+  /**
+   * Bucket timed events into grid cells. Anything starting outside the visible
+   * hours is clamped to the first/last row rather than silently dropped.
+   */
+  const eventsByCell = useMemo(() => {
+    const cells = new Map();
+
+    events
+      .filter((event) => !event.allDay)
+      .forEach((event) => {
+        const startsAt = new Date(event.start);
+        const dayIndex = days.findIndex((day) => isSameDay(day.date, startsAt));
+        if (dayIndex === -1) return;
+
+        const hour = Math.min(Math.max(startsAt.getHours(), FIRST_HOUR), LAST_HOUR);
+        const key = `${dayIndex}-${hour}`;
+        cells.set(key, [...(cells.get(key) || []), event]);
+      });
+
+    return cells;
+  }, [events, days]);
+
+  const eventsAt = (dayIndex, hour) => eventsByCell.get(`${dayIndex}-${hour}`) || [];
+
   const visibleTasks = useMemo(
     () => (q ? tasks.filter((task) => task.text.toLowerCase().includes(q)) : tasks),
     [tasks, q]
   );
-
-  const eventAt = (dayIndex, hour) =>
-    events.find((event) => event.day === dayIndex && event.hour === hour);
 
   const addTask = () => {
     const text = draftTask.trim();
@@ -103,6 +190,29 @@ const Calendar = ({ showToast, query }) => {
     showToast?.('Task added for this session — tasks are not persisted yet.', 'info');
   };
 
+  /** Insights derived from the events actually loaded, not fixtures. */
+  const insights = useMemo(() => {
+    if (!allEvents.length) {
+      return {
+        summary: 'No events on your calendar this week.',
+        action: 'Open an email and use Add to Calendar to create an event.',
+      };
+    }
+
+    const upcoming = allEvents
+      .filter((event) => new Date(event.start).getTime() >= fetchedAt)
+      .sort((a, b) => new Date(a.start) - new Date(b.start))[0];
+
+    return {
+      summary: `${allEvents.length} event${allEvents.length === 1 ? '' : 's'} on your calendar this week.`,
+      action: upcoming
+        ? `Next up: ${upcoming.title} on ${new Date(upcoming.start).toLocaleDateString([], {
+            weekday: 'long',
+          })} at ${clockTime(upcoming.start)}.`
+        : 'Nothing else scheduled for the rest of this week.',
+    };
+  }, [allEvents, fetchedAt]);
+
   return (
     <div className="flex h-full bg-white overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -112,7 +222,9 @@ const Calendar = ({ showToast, query }) => {
             <h1 className="text-[17px] md:text-[20px] font-black tracking-tighter text-slate-900">
               {formatRange(start)}
             </h1>
-            <span className="demo-note hidden sm:inline">Demo data</span>
+            {loading && (
+              <span className="text-[11px] font-bold text-slate-400">Loading…</span>
+            )}
           </div>
           <div className="flex items-center gap-6 shrink-0">
             <button
@@ -136,6 +248,13 @@ const Calendar = ({ showToast, query }) => {
               <ChevronRight size={15} />
             </button>
             <button
+              onClick={() => setReloadToken((value) => value + 1)}
+              aria-label="Refresh calendar"
+              className="p-8 rounded-8 border border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary transition-all"
+            >
+              <RefreshCw size={15} className={cn(loading && 'animate-spin')} />
+            </button>
+            <button
               onClick={() => setIsAIPanelOpen(true)}
               className="lg:hidden flex items-center gap-6 px-10 py-6 rounded-8 bg-primary/10 text-primary font-bold text-[12px]"
             >
@@ -149,6 +268,31 @@ const Calendar = ({ showToast, query }) => {
           <div className="flex flex-col md:flex-row min-h-full">
             {/* week grid */}
             <div className="flex-1 p-16 min-w-0">
+              {error && (
+                <div className="mb-12 rounded-12 border border-red-200 bg-red-50 px-12 py-10">
+                  <p className="text-[12px] font-bold text-red-700">{error}</p>
+                  {needsReauth && (
+                    <a
+                      href="/auth"
+                      className="mt-6 inline-block text-[11px] font-bold text-red-700 underline"
+                    >
+                      Sign in again to reconnect Google Calendar
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {!!allDayEvents.length && (
+                <div className="mb-12 flex flex-wrap items-center gap-6">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    All day
+                  </span>
+                  {allDayEvents.map((event) => (
+                    <EventChip key={event.id} event={event} />
+                  ))}
+                </div>
+              )}
+
               <div className="overflow-x-auto custom-scrollbar">
                 <div
                   className="grid border border-border rounded-12 overflow-hidden min-w-560"
@@ -167,22 +311,24 @@ const Calendar = ({ showToast, query }) => {
                     </div>
                   ))}
 
-                  {WEEK_HOURS.map((hour) => (
+                  {DAY_HOURS.map((hour) => (
                     <React.Fragment key={hour}>
                       <div className="border-b border-border p-6 text-[10px] font-bold text-slate-300">
                         {hourLabel(hour)}
                       </div>
                       {days.map((day, dayIndex) => {
-                        const event = eventAt(dayIndex, hour);
+                        const cellEvents = eventsAt(dayIndex, hour);
                         return (
                           <div
                             key={`${day.label}-${hour}`}
                             className={cn(
-                              'relative border-b border-l border-border h-56',
+                              'relative border-b border-l border-border min-h-56 p-2 flex flex-col gap-2',
                               day.isToday && 'bg-accent-light/40'
                             )}
                           >
-                            {event && <EventChip event={event} />}
+                            {cellEvents.map((event) => (
+                              <EventChip key={event.id} event={event} />
+                            ))}
                           </div>
                         );
                       })}
@@ -190,9 +336,10 @@ const Calendar = ({ showToast, query }) => {
                   ))}
                 </div>
               </div>
-              {q && !events.length && (
+
+              {!loading && !error && !events.length && (
                 <p className="text-[12px] font-bold text-slate-400 mt-12">
-                  No events match "{query}".
+                  {q ? `No events match "${query}".` : 'No events scheduled this week.'}
                 </p>
               )}
             </div>
@@ -212,7 +359,7 @@ const Calendar = ({ showToast, query }) => {
                 ))}
                 {!visibleTasks.length && (
                   <p className="text-[11px] font-bold text-slate-300 text-center py-12 border border-dashed border-slate-200 rounded-12">
-                    No tasks
+                    No tasks yet — tasks are kept for this session only.
                   </p>
                 )}
               </div>
@@ -245,11 +392,7 @@ const Calendar = ({ showToast, query }) => {
         isOpen={isAIPanelOpen}
         onClose={() => setIsAIPanelOpen(false)}
         mode="detail"
-        insights={{
-          summary: 'A meeting was detected in "Project Sync?". Want to add it to your calendar?',
-          action: 'Add the detected meeting to Google Calendar.',
-          reply: 'You have a free slot Tuesday at 11 AM that matches a pending invite.',
-        }}
+        insights={insights}
         onAddToCalendar={() =>
           showToast?.('Open an email and use Add to Calendar to create a real event.', 'info')
         }

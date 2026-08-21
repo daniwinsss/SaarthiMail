@@ -22,6 +22,8 @@ for (const key of ["MONGO_URI", "SESSION_SECRET"]) {
 const isProduction = process.env.NODE_ENV === "production";
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
+const { SESSION_COOKIE_NAME, sessionCookieOptions } = require("./src/config/sessionCookie.js");
+
 app.set("trust proxy", 1);
 
 app.use(
@@ -43,10 +45,9 @@ app.use(
       collectionName: "sessions",
       ttl: 14 * 24 * 60 * 60,
     }),
+    name: SESSION_COOKIE_NAME,
     cookie: {
-      secure: isProduction,
-      httpOnly: true,
-      sameSite: isProduction ? "none" : "lax",
+      ...sessionCookieOptions(),
       maxAge: 14 * 24 * 60 * 60 * 1000,
     },
   })

@@ -140,6 +140,9 @@ const getGmailEmails = async (req, res) => {
                 await Email.findOneAndUpdate(
                     {
                         gmailId: parsedEmail.gmailId,
+                        // Scoped to the owner: without this an id collision
+                        // across accounts would reassign someone else's email.
+                        ownerEmail,
                     },
 
                     {

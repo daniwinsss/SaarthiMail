@@ -1,0 +1,404 @@
+{
+  "client/eslint.config.js": {
+    "mtime": 1787225441.3048823,
+    "seen": 1787310847.6321425,
+    "ast_hash": "fa91453358b56681481f75f81d1bfccd",
+    "semantic_hash": "fa91453358b56681481f75f81d1bfccd"
+  },
+  "client/package.json": {
+    "mtime": 1787225441.3104978,
+    "seen": 1787310847.6321526,
+    "ast_hash": "4ce46e8bcda30cf9ad7922a49144540f",
+    "semantic_hash": "4ce46e8bcda30cf9ad7922a49144540f"
+  },
+  "client/postcss.config.js": {
+    "mtime": 1787225441.3104978,
+    "seen": 1787310847.6321554,
+    "ast_hash": "ac96fa81e8dd4224012bce81068fe169",
+    "semantic_hash": "ac96fa81e8dd4224012bce81068fe169"
+  },
+  "client/src/App.jsx": {
+    "mtime": 1787234591.2858002,
+    "seen": 1787310847.6321568,
+    "ast_hash": "27cbb3facb98ec2f1e5b04ff008dc7ee",
+    "semantic_hash": "27cbb3facb98ec2f1e5b04ff008dc7ee"
+  },
+  "client/src/components/AIBadge.jsx": {
+    "mtime": 1787234103.5599918,
+    "seen": 1787310847.6321588,
+    "ast_hash": "ef770f2b3441b92c7f8d04f8c60c56fd",
+    "semantic_hash": "ef770f2b3441b92c7f8d04f8c60c56fd"
+  },
+  "client/src/components/AIInsightPanel.jsx": {
+    "mtime": 1787234367.4787576,
+    "seen": 1787310847.6321597,
+    "ast_hash": "66a28b2e4a6a1daba12d78540da8024e",
+    "semantic_hash": "66a28b2e4a6a1daba12d78540da8024e"
+  },
+  "client/src/components/ComposeModal.jsx": {
+    "mtime": 1787234708.8230214,
+    "seen": 1787310847.6321614,
+    "ast_hash": "600cf647a4972926b884a47a5ffaf4a5",
+    "semantic_hash": "600cf647a4972926b884a47a5ffaf4a5"
+  },
+  "client/src/components/PriorityTag.jsx": {
+    "mtime": 1787234103.6093874,
+    "seen": 1787310847.6321623,
+    "ast_hash": "374945f6ca0dbe78430af84ea8c6e417",
+    "semantic_hash": "374945f6ca0dbe78430af84ea8c6e417"
+  },
+  "client/src/components/Sidebar.jsx": {
+    "mtime": 1787234591.2858002,
+    "seen": 1787310847.6321633,
+    "ast_hash": "cde3186a6545bd0414e70d60db5bd587",
+    "semantic_hash": "cde3186a6545bd0414e70d60db5bd587"
+  },
+  "client/src/components/Tabs.jsx": {
+    "mtime": 1787235158.4287043,
+    "seen": 1787310847.632165,
+    "ast_hash": "9b9f6b2fe00360b884f015603eb602d3",
+    "semantic_hash": "9b9f6b2fe00360b884f015603eb602d3"
+  },
+  "client/src/components/Toast.jsx": {
+    "mtime": 1787234606.9401212,
+    "seen": 1787310847.6321661,
+    "ast_hash": "ab04c3020db02f58a71e3ab6e41c9e89",
+    "semantic_hash": "ab04c3020db02f58a71e3ab6e41c9e89"
+  },
+  "client/src/components/Topbar.jsx": {
+    "mtime": 1787234591.2949965,
+    "seen": 1787310847.6321676,
+    "ast_hash": "17071f032441bb34287fd1ec8c9e619f",
+    "semantic_hash": "17071f032441bb34287fd1ec8c9e619f"
+  },
+  "client/src/data/mockData.js": {
+    "mtime": 1787234126.9149115,
+    "seen": 1787310847.632169,
+    "ast_hash": "a5079667d171b57cfec4e1d660b70a93",
+    "semantic_hash": "a5079667d171b57cfec4e1d660b70a93"
+  },
+  "client/src/main.jsx": {
+    "mtime": 1787225441.32607,
+    "seen": 1787310847.63217,
+    "ast_hash": "d667f2a54978de42e5310b02f1ade3e8",
+    "semantic_hash": "d667f2a54978de42e5310b02f1ade3e8"
+  },
+  "client/src/pages/Auth.jsx": {
+    "mtime": 1787234591.2949965,
+    "seen": 1787310847.6321712,
+    "ast_hash": "41a04dc8a7003691192cbd19390742e5",
+    "semantic_hash": "41a04dc8a7003691192cbd19390742e5"
+  },
+  "client/src/pages/Calendar.jsx": {
+    "mtime": 1787235359.039541,
+    "seen": 1787310847.6321723,
+    "ast_hash": "c54df90a34068ed17ac99f3c8fbfc019",
+    "semantic_hash": "c54df90a34068ed17ac99f3c8fbfc019"
+  },
+  "client/src/pages/Inbox.jsx": {
+    "mtime": 1787235287.7098382,
+    "seen": 1787310847.6321735,
+    "ast_hash": "7db9c825bac665a42826f65f37b3fb71",
+    "semantic_hash": "7db9c825bac665a42826f65f37b3fb71"
+  },
+  "client/src/pages/MailDetail.jsx": {
+    "mtime": 1787234420.9302287,
+    "seen": 1787310847.6321747,
+    "ast_hash": "e3bb3bc5588a2a79e73c4d4811a0f79d",
+    "semantic_hash": "e3bb3bc5588a2a79e73c4d4811a0f79d"
+  },
+  "client/src/pages/Priority.jsx": {
+    "mtime": 1787234921.4645424,
+    "seen": 1787310847.632176,
+    "ast_hash": "746f5a23fc544a49593bf59bd2423f02",
+    "semantic_hash": "746f5a23fc544a49593bf59bd2423f02"
+  },
+  "client/src/pages/Settings.jsx": {
+    "mtime": 1787234728.8639262,
+    "seen": 1787310847.632177,
+    "ast_hash": "65714a3f93dd98d1fe79ca4fde3679b7",
+    "semantic_hash": "65714a3f93dd98d1fe79ca4fde3679b7"
+  },
+  "client/src/services/apiClient.js": {
+    "mtime": 1787230433.4608512,
+    "seen": 1787310847.632178,
+    "ast_hash": "11a3338f1caef90613556059d7dbea39",
+    "semantic_hash": "11a3338f1caef90613556059d7dbea39"
+  },
+  "client/src/utils/cn.js": {
+    "mtime": 1787225441.331557,
+    "seen": 1787310847.6321795,
+    "ast_hash": "cdb5cf22dfa9fbbe5d28c673e5b8a3ce",
+    "semantic_hash": "cdb5cf22dfa9fbbe5d28c673e5b8a3ce"
+  },
+  "client/src/utils/mapEmail.js": {
+    "mtime": 1787234089.6567852,
+    "seen": 1787310847.6321814,
+    "ast_hash": "18304cf13dbbb242346e964d9b165839",
+    "semantic_hash": "18304cf13dbbb242346e964d9b165839"
+  },
+  "client/src/utils/priority.js": {
+    "mtime": 1787234089.6078217,
+    "seen": 1787310847.6321826,
+    "ast_hash": "05aaaebcf1f2b3ed9fcf78ad3cfcecef",
+    "semantic_hash": "05aaaebcf1f2b3ed9fcf78ad3cfcecef"
+  },
+  "client/tailwind.config.js": {
+    "mtime": 1787225441.331557,
+    "seen": 1787310847.6321838,
+    "ast_hash": "8480e906c9a6333df31a78af726e3941",
+    "semantic_hash": "8480e906c9a6333df31a78af726e3941"
+  },
+  "client/vite.config.js": {
+    "mtime": 1787225441.3338563,
+    "seen": 1787310847.6321847,
+    "ast_hash": "199e1221ae03d6974fdc8b5e23787b98",
+    "semantic_hash": "199e1221ae03d6974fdc8b5e23787b98"
+  },
+  "package.json": {
+    "mtime": 1787225446.025586,
+    "seen": 1787310847.632186,
+    "ast_hash": "97528dcd753feb963376426d90612b52",
+    "semantic_hash": "97528dcd753feb963376426d90612b52"
+  },
+  "server/api/index.js": {
+    "mtime": 1787225446.0265872,
+    "seen": 1787310847.632187,
+    "ast_hash": "ba16dd8448d418e4f0bb0b42b3a76ed4",
+    "semantic_hash": "ba16dd8448d418e4f0bb0b42b3a76ed4"
+  },
+  "server/app.js": {
+    "mtime": 1787231341.616999,
+    "seen": 1787310847.632188,
+    "ast_hash": "bbeee6beefa3110895cea65109162ac1",
+    "semantic_hash": "bbeee6beefa3110895cea65109162ac1"
+  },
+  "server/package.json": {
+    "mtime": 1787230426.3092978,
+    "seen": 1787310847.6321895,
+    "ast_hash": "b696b2a4e6305bf50044872972b2c1b5",
+    "semantic_hash": "b696b2a4e6305bf50044872972b2c1b5"
+  },
+  "server/server.js": {
+    "mtime": 1787231341.615,
+    "seen": 1787310847.6321905,
+    "ast_hash": "59b9a79b9c11498a7accdef86640d49e",
+    "semantic_hash": "59b9a79b9c11498a7accdef86640d49e"
+  },
+  "server/src/config/ai.js": {
+    "mtime": 1787229596.6218574,
+    "seen": 1787310847.6321917,
+    "ast_hash": "26bae99cf96b29b00649024d1a2ae1c3",
+    "semantic_hash": "26bae99cf96b29b00649024d1a2ae1c3"
+  },
+  "server/src/config/db.js": {
+    "mtime": 1787231341.615,
+    "seen": 1787310847.6321929,
+    "ast_hash": "900f3fd859c032abf1dbf4501f4b9f9b",
+    "semantic_hash": "900f3fd859c032abf1dbf4501f4b9f9b"
+  },
+  "server/src/config/demoUser.js": {
+    "mtime": 1787230277.4274206,
+    "seen": 1787310847.6321938,
+    "ast_hash": "68eb8d1e768bf3184bfc02b08773d305",
+    "semantic_hash": "68eb8d1e768bf3184bfc02b08773d305"
+  },
+  "server/src/config/dns.js": {
+    "mtime": 1787231350.156739,
+    "seen": 1787310847.632195,
+    "ast_hash": "e0f60ced07039085f27df5d4a5e6784a",
+    "semantic_hash": "e0f60ced07039085f27df5d4a5e6784a"
+  },
+  "server/src/config/passport.js": {
+    "mtime": 1787229596.6232781,
+    "seen": 1787310847.6321988,
+    "ast_hash": "deb88a03009b8ddcd529495434df5180",
+    "semantic_hash": "deb88a03009b8ddcd529495434df5180"
+  },
+  "server/src/controllers/auth.controller.js": {
+    "mtime": 1787229596.6238658,
+    "seen": 1787310847.6322002,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "server/src/controllers/gmail.controller.js": {
+    "mtime": 1787230331.9717495,
+    "seen": 1787310847.6322012,
+    "ast_hash": "a197e91dd252cae8eaf1db8a92509961",
+    "semantic_hash": "a197e91dd252cae8eaf1db8a92509961"
+  },
+  "server/src/controllers/mail.controller.js": {
+    "mtime": 1787230316.3983028,
+    "seen": 1787310847.6322021,
+    "ast_hash": "8cadc1a4ca0c4f61590a2b069e0bec21",
+    "semantic_hash": "8cadc1a4ca0c4f61590a2b069e0bec21"
+  },
+  "server/src/middlewares/auth.middleware.js": {
+    "mtime": 1787230277.4772527,
+    "seen": 1787310847.6322036,
+    "ast_hash": "ff907162156b93d49e011f7f02de771f",
+    "semantic_hash": "ff907162156b93d49e011f7f02de771f"
+  },
+  "server/src/models/email.models.js": {
+    "mtime": 1787225447.5422697,
+    "seen": 1787310847.6322048,
+    "ast_hash": "26a14907698d8c8aa9d911f91b59dd53",
+    "semantic_hash": "26a14907698d8c8aa9d911f91b59dd53"
+  },
+  "server/src/prompts/meeting.prompt.js": {
+    "mtime": 1787225447.5442786,
+    "seen": 1787310847.632206,
+    "ast_hash": "b18a7ca19d8ffe8f78465a5a7994203d",
+    "semantic_hash": "b18a7ca19d8ffe8f78465a5a7994203d"
+  },
+  "server/src/prompts/reply.prompt.js": {
+    "mtime": 1787225447.5442786,
+    "seen": 1787310847.6322074,
+    "ast_hash": "810d369411dbfeeca1b039f759ff9a62",
+    "semantic_hash": "810d369411dbfeeca1b039f759ff9a62"
+  },
+  "server/src/prompts/summarise.prompt.js": {
+    "mtime": 1787225447.5442786,
+    "seen": 1787310847.632209,
+    "ast_hash": "9c2b97468148490d1fd8e813a3ccb6eb",
+    "semantic_hash": "9c2b97468148490d1fd8e813a3ccb6eb"
+  },
+  "server/src/routes/auth.routes.js": {
+    "mtime": 1787230285.7449117,
+    "seen": 1787310847.6322107,
+    "ast_hash": "68e889cc927771a9bdb89755f647fac4",
+    "semantic_hash": "68e889cc927771a9bdb89755f647fac4"
+  },
+  "server/src/routes/gmail.routes.js": {
+    "mtime": 1787229596.6258929,
+    "seen": 1787310847.6322117,
+    "ast_hash": "ee9e0bbbd5111e75d8359f8a8f490fa8",
+    "semantic_hash": "ee9e0bbbd5111e75d8359f8a8f490fa8"
+  },
+  "server/src/routes/mails.routes.js": {
+    "mtime": 1787230307.5935578,
+    "seen": 1787310847.6322129,
+    "ast_hash": "255cf791c9ddaf6c6ef97d1468c3caf6",
+    "semantic_hash": "255cf791c9ddaf6c6ef97d1468c3caf6"
+  },
+  "server/src/scripts/seedDemo.js": {
+    "mtime": 1787231341.620638,
+    "seen": 1787310847.6322143,
+    "ast_hash": "ab2020aa7522d2c91f1d3bd4a0d05348",
+    "semantic_hash": "ab2020aa7522d2c91f1d3bd4a0d05348"
+  },
+  "server/src/services/ai/extractMeeting.js": {
+    "mtime": 1787229596.6268983,
+    "seen": 1787310847.6322153,
+    "ast_hash": "dca565d3579b1429de7450f81c45bf12",
+    "semantic_hash": "dca565d3579b1429de7450f81c45bf12"
+  },
+  "server/src/services/ai/generateReply.js": {
+    "mtime": 1787229596.6268983,
+    "seen": 1787310847.6322167,
+    "ast_hash": "b46f4b59d88596935bc462cf407cb988",
+    "semantic_hash": "b46f4b59d88596935bc462cf407cb988"
+  },
+  "server/src/services/ai/summarizeEmail.js": {
+    "mtime": 1787229596.6268983,
+    "seen": 1787310847.6322176,
+    "ast_hash": "305879138a7c9ef6112aa0dc9bf8ca6c",
+    "semantic_hash": "305879138a7c9ef6112aa0dc9bf8ca6c"
+  },
+  "server/src/services/gmail/fetchEmailDetails.js": {
+    "mtime": 1787225447.5480282,
+    "seen": 1787310847.6322188,
+    "ast_hash": "f07b7c25e3b90cdc60916bdb510a7016",
+    "semantic_hash": "f07b7c25e3b90cdc60916bdb510a7016"
+  },
+  "server/src/services/gmail/fetchEmails.js": {
+    "mtime": 1787225447.5480282,
+    "seen": 1787310847.6322198,
+    "ast_hash": "e6973631b10b763e9cfaeaa6377f8cdd",
+    "semantic_hash": "e6973631b10b763e9cfaeaa6377f8cdd"
+  },
+  "server/src/services/google/createCalenderEvent.js": {
+    "mtime": 1787225447.550033,
+    "seen": 1787310847.6322212,
+    "ast_hash": "5d0ad5c4feb1dc930967e261035a77f8",
+    "semantic_hash": "5d0ad5c4feb1dc930967e261035a77f8"
+  },
+  "server/vercel.json": {
+    "mtime": 1787225447.5510383,
+    "seen": 1787310847.6322222,
+    "ast_hash": "4be8aa2894f1dc368ab1fa330b638988",
+    "semantic_hash": "4be8aa2894f1dc368ab1fa330b638988"
+  },
+  "DEPLOY.md": {
+    "mtime": 1787231442.6662931,
+    "seen": 1787310847.6322236,
+    "ast_hash": "34016407157142c55b3c6aaa0e27890b",
+    "semantic_hash": "34016407157142c55b3c6aaa0e27890b"
+  },
+  "README.md": {
+    "mtime": 1787229596.6066408,
+    "seen": 1787310847.6322248,
+    "ast_hash": "aeafa9ce46f6279d50964c1a55d79d31",
+    "semantic_hash": "aeafa9ce46f6279d50964c1a55d79d31"
+  },
+  "client/README.md": {
+    "mtime": 1787225441.3048823,
+    "seen": 1787310847.632226,
+    "ast_hash": "abfa161e3e5434e3e85394bf03d387a4",
+    "semantic_hash": "abfa161e3e5434e3e85394bf03d387a4"
+  },
+  "client/index.html": {
+    "mtime": 1787234869.3039906,
+    "seen": 1787310847.6322274,
+    "ast_hash": "7ed286b753261132dd676c83f7b5d301",
+    "semantic_hash": "7ed286b753261132dd676c83f7b5d301"
+  },
+  "designdoc.md": {
+    "mtime": 1787225441.334651,
+    "seen": 1787310847.6322286,
+    "ast_hash": "dcbb316202a7729e61d8c1b1875377a3",
+    "semantic_hash": "dcbb316202a7729e61d8c1b1875377a3"
+  },
+  "client/logos.svg": {
+    "mtime": 1787225441.3071,
+    "seen": 1787310847.6322296,
+    "ast_hash": "8d7fd22d2a31506ac976320a90018c61",
+    "semantic_hash": "8d7fd22d2a31506ac976320a90018c61"
+  },
+  "client/public/favicon.svg": {
+    "mtime": 1787225441.3125722,
+    "seen": 1787310847.632231,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": "7e840862161341271697daa99a40d76b"
+  },
+  "client/public/icons.svg": {
+    "mtime": 1787225441.3132832,
+    "seen": 1787310847.632232,
+    "ast_hash": "21c7473c592c67dc87223d49892c8f0a",
+    "semantic_hash": "21c7473c592c67dc87223d49892c8f0a"
+  },
+  "client/public/logo.svg": {
+    "mtime": 1787225441.3132832,
+    "seen": 1787310847.6322331,
+    "ast_hash": "a4fba34e8467501b168ba9a6098eb973",
+    "semantic_hash": "a4fba34e8467501b168ba9a6098eb973"
+  },
+  "client/src/assets/hero.png": {
+    "mtime": 1787225441.3171492,
+    "seen": 1787310847.6322346,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": "aead493361b27e7510691c5d7072dfc1"
+  },
+  "client/src/assets/react.svg": {
+    "mtime": 1787225441.3178332,
+    "seen": 1787310847.6322355,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": "f0402b67b6ce880f65666bb49e841696"
+  },
+  "client/src/assets/vite.svg": {
+    "mtime": 1787225441.3183396,
+    "seen": 1787310847.6322367,
+    "ast_hash": "6d5180a782d64c8cf51ba01c2a2184d8",
+    "semantic_hash": "6d5180a782d64c8cf51ba01c2a2184d8"
+  }
+}
