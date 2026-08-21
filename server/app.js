@@ -19,19 +19,46 @@ for (const key of ["MONGO_URI", "SESSION_SECRET"]) {
   }
 }
 
-const isProduction = process.env.NODE_ENV === "production";
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = new Set(
+  [
+    clientUrl,
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "https://saarthi-mail.vercel.app",
+  ]
+    .filter(Boolean)
+    .map((origin) => origin.replace(/\/+$/, ""))
+);
+const isAllowedVercelPreview = (origin = "") =>
+  /^https:\/\/saarthi-mail-[a-z0-9-]+\.vercel\.app$/i.test(origin);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+
+    const normalizedOrigin = origin.replace(/\/+$/, "");
+    if (allowedOrigins.has(normalizedOrigin) || isAllowedVercelPreview(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
 const { SESSION_COOKIE_NAME, sessionCookieOptions } = require("./src/config/sessionCookie.js");
 
 app.set("trust proxy", 1);
 
-app.use(
-  cors({
-    origin: clientUrl,
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  return next();
+});
 
 app.use(express.json());
 

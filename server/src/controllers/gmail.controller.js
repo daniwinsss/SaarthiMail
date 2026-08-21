@@ -193,9 +193,24 @@ const getGmailEmails = async (req, res) => {
             data: detailEmails,
         });
     } catch (error) {
+        const status = error?.code || error?.response?.status || 500;
+        const googleMessage =
+            error?.response?.data?.error?.message ||
+            error?.errors?.[0]?.message ||
+            error.message;
+
+        if (status === 401 || status === 403) {
+            return res.status(status).json({
+                success: false,
+                message:
+                    "Saarthi can't read Gmail for this session. Please sign out and sign in again to grant Gmail access.",
+                reauth: true,
+            });
+        }
+
         res.status(500).json({
             success: false,
-            message: error.message,
+            message: googleMessage || "Error while syncing Gmail",
         });
     }
 };

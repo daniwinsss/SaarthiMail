@@ -1,12 +1,15 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "");
 
 const getJson = async (path, options = {}) => {
+  const hasBody = options.body !== undefined;
+  const headers = {
+    ...(hasBody ? { "Content-Type": "application/json" } : {}),
+    ...(options.headers || {}),
+  };
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
